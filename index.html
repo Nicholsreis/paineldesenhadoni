@@ -1,0 +1,2048 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Sistema BALCÃO — Gerenciamento de Senhas</title>
+
+  <style>
+    /* =========================================================
+       CSS Variables — Light Theme
+       ========================================================= */
+    :root {
+      --bg-primary:    #f8fafc;
+      --bg-secondary:  #ffffff;
+      --bg-card:       #ffffff;
+      --bg-elevated:   #f1f5f9;
+      --text-primary:  #0f172a;
+      --text-secondary:#475569;
+      --text-muted:    #94a3b8;
+      --border:        #e2e8f0;
+      --accent:        #2563eb;
+      --accent-hover:  #1d4ed8;
+      --success:       #059669;
+      --warning:       #d97706;
+      --danger:        #dc2626;
+      --radius:        8px;
+      --radius-lg:     12px;
+    }
+
+    /* =========================================================
+       CSS Reset
+       ========================================================= */
+    *, *::before, *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    /* =========================================================
+       Base Styles
+       ========================================================= */
+    html {
+      min-width: 1280px;
+    }
+
+    body {
+      background: var(--bg-primary);
+      color: var(--text-primary);
+      font-family: 'Rajdhani', sans-serif;
+      min-height: 100vh;
+    }
+
+    /* =========================================================
+       Custom Scrollbar — Dark Theme
+       ========================================================= */
+    ::-webkit-scrollbar {
+      width: 8px;
+      height: 8px;
+    }
+
+    ::-webkit-scrollbar-track {
+      background: var(--bg-elevated);
+    }
+
+    ::-webkit-scrollbar-thumb {
+      background: #cbd5e1;
+      border-radius: var(--radius);
+    }
+
+    ::-webkit-scrollbar-thumb:hover {
+      background: #94a3b8;
+    }
+
+    /* =========================================================
+       Utility Classes
+       ========================================================= */
+    .flex         { display: flex; }
+    .flex-col     { flex-direction: column; }
+    .items-center { align-items: center; }
+    .justify-center { justify-content: center; }
+    .gap-2        { gap: 0.5rem; }
+    .gap-4        { gap: 1rem; }
+    .w-full       { width: 100%; }
+    .h-full       { height: 100%; }
+    .text-center  { text-align: center; }
+
+    /* =========================================================
+       Animations
+       ========================================================= */
+    @keyframes pulse-call {
+      0%   { box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.7); }
+      50%  { box-shadow: 0 0 0 16px rgba(59, 130, 246, 0); }
+      100% { box-shadow: 0 0 0 0 rgba(59, 130, 246, 0); }
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to   { opacity: 1; }
+    }
+
+    @keyframes slideIn {
+      from { opacity: 0; transform: translateY(-12px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    /* =========================================================
+       NavBar
+       ========================================================= */
+    .navbar {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 60px;
+      background: var(--bg-secondary);
+      border-bottom: 1px solid var(--border);
+      box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+      display: flex;
+      align-items: center;
+      padding: 0 1.5rem;
+      gap: 1rem;
+      z-index: 1000;
+    }
+
+    .navbar-logo {
+      font-family: 'Oswald', sans-serif;
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: var(--accent);
+      letter-spacing: 0.1em;
+      margin-right: 1rem;
+      flex-shrink: 0;
+    }
+
+    .navbar-nav {
+      display: flex;
+      gap: 0.25rem;
+    }
+
+    .navbar-btn {
+      background: none;
+      border: none;
+      cursor: pointer;
+      font-family: 'Rajdhani', sans-serif;
+      font-size: 0.95rem;
+      font-weight: 600;
+      padding: 0.4rem 1rem;
+      border-radius: var(--radius);
+      color: var(--text-secondary);
+      transition: color 0.15s, background 0.15s;
+    }
+
+    .navbar-btn:hover {
+      color: var(--text-primary);
+    }
+
+    .navbar-btn.active {
+      background: var(--accent);
+      color: #fff;
+    }
+
+    /* =========================================================
+       Module Container
+       ========================================================= */
+    .module-container {
+      padding-top: 60px;
+      min-height: 100vh;
+    }
+
+    .module-placeholder {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      height: calc(100vh - 60px);
+      font-family: 'Oswald', sans-serif;
+      font-size: 2rem;
+      color: var(--text-secondary);
+    }
+
+    /* =========================================================
+       Totem Module
+       ========================================================= */
+    .totem {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: calc(100vh - 60px);
+      padding: 2rem;
+      background: linear-gradient(135deg, #eff6ff 0%, #f8fafc 100%);
+      text-align: center;
+    }
+
+    .totem-sector {
+      font-family: 'Oswald', sans-serif;
+      font-size: 3.5rem;
+      font-weight: 700;
+      color: var(--accent);
+      letter-spacing: 0.15em;
+      margin-bottom: 0.5rem;
+    }
+
+    .totem-instruction {
+      font-family: 'Rajdhani', sans-serif;
+      font-size: 1.5rem;
+      color: var(--text-secondary);
+      margin-bottom: 3rem;
+    }
+
+    .totem-buttons {
+      display: flex;
+      gap: 2rem;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+
+    .service-btn {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 1rem;
+      width: 220px;
+      height: 220px;
+      border: none;
+      border-radius: var(--radius-lg);
+      cursor: pointer;
+      font-family: 'Oswald', sans-serif;
+      font-size: 1.6rem;
+      font-weight: 700;
+      color: #fff;
+      letter-spacing: 0.05em;
+      transition: transform 0.15s, filter 0.15s;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+    }
+
+    .service-btn:hover {
+      transform: scale(1.04);
+      filter: brightness(1.1);
+    }
+
+    .service-btn:active {
+      transform: scale(0.97);
+    }
+
+    .service-btn-icon {
+      font-size: 3rem;
+      line-height: 1;
+    }
+
+    .totem-unavailable {
+      font-family: 'Rajdhani', sans-serif;
+      font-size: 1.4rem;
+      color: var(--warning);
+      background: rgba(217,119,6,0.1);
+      border: 1px solid var(--warning);
+      border-radius: var(--radius-lg);
+      padding: 2rem 3rem;
+    }
+
+    /* Paper-out card */
+    .paper-out-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.6);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 3000;
+      animation: fadeIn 0.3s ease;
+    }
+
+    .paper-out-card {
+      background: #fff;
+      border: 3px solid #dc2626;
+      border-radius: var(--radius-lg);
+      padding: 2.5rem 3rem;
+      text-align: center;
+      max-width: 420px;
+      animation: slideIn 0.3s ease;
+    }
+
+    .paper-out-icon {
+      font-size: 4rem;
+      margin-bottom: 1rem;
+      display: block;
+    }
+
+    .paper-out-title {
+      font-family: 'Oswald', sans-serif;
+      font-size: 1.8rem;
+      font-weight: 700;
+      color: #dc2626;
+      letter-spacing: 0.05em;
+      margin-bottom: 0.5rem;
+    }
+
+    .paper-out-msg {
+      font-family: 'Rajdhani', sans-serif;
+      font-size: 1.1rem;
+      color: #475569;
+      margin-bottom: 1.5rem;
+      line-height: 1.5;
+    }
+
+    .paper-out-dismiss {
+      background: #dc2626;
+      color: #fff;
+      border: none;
+      font-family: 'Rajdhani', sans-serif;
+      font-size: 1rem;
+      font-weight: 700;
+      padding: 0.6rem 2rem;
+      border-radius: var(--radius);
+      cursor: pointer;
+    }
+
+    .paper-out-dismiss:hover { filter: brightness(1.1); }
+
+    /* Modal */
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.75);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 2000;
+      animation: fadeIn 0.2s ease;
+    }
+
+    .modal-ticket {
+      background: var(--bg-secondary);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 2.5rem 3rem;
+      min-width: 380px;
+      max-width: 480px;
+      text-align: center;
+      animation: slideIn 0.25s ease;
+      position: relative;
+    }
+
+    .modal-sector {
+      font-family: 'Rajdhani', sans-serif;
+      font-size: 1rem;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.15em;
+      margin-bottom: 0.5rem;
+    }
+
+    .modal-ticket-number {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: 7rem;
+      font-weight: 700;
+      line-height: 1;
+      margin: 0.25rem 0;
+    }
+
+    .modal-service-label {
+      font-family: 'Rajdhani', sans-serif;
+      font-size: 1.2rem;
+      font-weight: 600;
+      margin-bottom: 1.5rem;
+      padding: 0.3rem 1rem;
+      border-radius: 999px;
+      display: inline-block;
+      color: #fff;
+    }
+
+    .modal-info {
+      font-family: 'Rajdhani', sans-serif;
+      font-size: 1rem;
+      color: var(--text-secondary);
+      margin-bottom: 0.4rem;
+    }
+
+    .modal-welcome {
+      font-family: 'Rajdhani', sans-serif;
+      font-size: 1rem;
+      color: var(--text-muted);
+      margin-top: 1.2rem;
+      font-style: italic;
+    }
+
+    .modal-close-btn {
+      margin-top: 1.5rem;
+      background: var(--bg-elevated);
+      border: 1px solid var(--border);
+      color: var(--text-primary);
+      font-family: 'Rajdhani', sans-serif;
+      font-size: 1rem;
+      font-weight: 600;
+      padding: 0.6rem 2rem;
+      border-radius: var(--radius);
+      cursor: pointer;
+      transition: background 0.15s;
+    }
+
+    .modal-close-btn:hover {
+      background: var(--accent);
+    }
+
+    .modal-timer-bar {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      height: 4px;
+      background: var(--accent);
+      border-radius: 0 0 var(--radius-lg) var(--radius-lg);
+      animation: timer-shrink 6s linear forwards;
+    }
+
+    @keyframes timer-shrink {
+      from { width: 100%; }
+      to   { width: 0%; }
+    }
+
+    /* =========================================================
+       Painel Module
+       ========================================================= */
+    .painel {
+      display: flex;
+      flex-direction: column;
+      height: calc(100vh - 60px);
+      background: var(--bg-primary);
+    }
+
+    .painel-header {
+      background: var(--bg-secondary);
+      border-bottom: 1px solid var(--border);
+      padding: 0.75rem 1.5rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .painel-header-sector {
+      font-family: 'Oswald', sans-serif;
+      font-size: 1.4rem;
+      font-weight: 700;
+      color: var(--accent);
+      letter-spacing: 0.1em;
+    }
+
+    .painel-body {
+      display: flex;
+      flex: 1;
+      overflow: hidden;
+    }
+
+    .painel-main {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 2rem;
+      min-width: 60%;
+    }
+
+    .painel-sidebar {
+      width: 340px;
+      flex-shrink: 0;
+      display: flex;
+      flex-direction: column;
+      border-left: 1px solid var(--border);
+      overflow: hidden;
+    }
+
+    .current-call-area {
+      text-align: center;
+      padding: 1rem;
+    }
+
+    .current-call-label {
+      font-family: 'Rajdhani', sans-serif;
+      font-size: 1rem;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.15em;
+      margin-bottom: 0.5rem;
+    }
+
+    .current-call-number {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: 10rem;
+      font-weight: 700;
+      line-height: 1;
+      transition: color 0.3s;
+    }
+
+    .current-call-number.flash {
+      animation: pulse-call 1.2s ease;
+    }
+
+    .current-call-type {
+      font-family: 'Rajdhani', sans-serif;
+      font-size: 1.4rem;
+      font-weight: 600;
+      padding: 0.3rem 1.2rem;
+      border-radius: 999px;
+      display: inline-block;
+      color: #fff;
+      margin-bottom: 0.5rem;
+    }
+
+    .current-call-station {
+      font-family: 'Rajdhani', sans-serif;
+      font-size: 1.2rem;
+      color: var(--text-secondary);
+    }
+
+    .painel-waiting {
+      text-align: center;
+      color: var(--text-muted);
+    }
+
+    .painel-waiting-text {
+      font-family: 'Oswald', sans-serif;
+      font-size: 2rem;
+      margin-top: 1rem;
+    }
+
+    /* Queue counters */
+    .queue-counters {
+      display: flex;
+      gap: 1rem;
+      margin-top: 1.5rem;
+    }
+
+    .queue-counter-card {
+      flex: 1;
+      background: var(--bg-secondary);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 0.75rem 1rem;
+      text-align: center;
+    }
+
+    .queue-counter-value {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: 2.5rem;
+      font-weight: 700;
+      line-height: 1;
+    }
+
+    .queue-counter-label {
+      font-family: 'Rajdhani', sans-serif;
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      margin-top: 0.2rem;
+    }
+
+    /* Recent calls */
+    .recent-calls {
+      flex: 1;
+      padding: 1rem;
+      overflow-y: auto;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .recent-calls-title {
+      font-family: 'Rajdhani', sans-serif;
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      margin-bottom: 0.75rem;
+    }
+
+    .recent-call-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0.5rem 0.75rem;
+      border-radius: var(--radius);
+      margin-bottom: 0.4rem;
+      background: var(--bg-elevated);
+      font-family: 'Rajdhani', sans-serif;
+    }
+
+    .recent-call-ticket {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: 1.4rem;
+      font-weight: 700;
+    }
+
+    .recent-call-meta {
+      font-size: 0.85rem;
+      color: var(--text-muted);
+    }
+
+    /* Media Carousel */
+    .media-carousel {
+      height: 200px;
+      position: relative;
+      overflow: hidden;
+      flex-shrink: 0;
+    }
+
+    .media-slide {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 1rem;
+      text-align: center;
+      background-size: cover;
+      background-position: center;
+      transition: opacity 0.5s ease;
+    }
+
+    .media-slide-overlay {
+      position: absolute;
+      inset: 0;
+      background: rgba(0,0,0,0.45);
+    }
+
+    .media-slide-content {
+      position: relative;
+      z-index: 1;
+    }
+
+    .media-slide-title {
+      font-family: 'Oswald', sans-serif;
+      font-size: 1.1rem;
+      font-weight: 700;
+      color: #fff;
+      margin-bottom: 0.25rem;
+    }
+
+    .media-slide-caption {
+      font-family: 'Rajdhani', sans-serif;
+      font-size: 0.9rem;
+      color: rgba(255,255,255,0.8);
+    }
+
+    .media-dots {
+      position: absolute;
+      bottom: 8px;
+      left: 0;
+      right: 0;
+      display: flex;
+      justify-content: center;
+      gap: 6px;
+      z-index: 2;
+    }
+
+    .media-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: rgba(255,255,255,0.4);
+      transition: background 0.3s;
+    }
+
+    .media-dot.active {
+      background: #fff;
+    }
+
+    /* Footer */
+    .painel-footer {
+      background: var(--bg-secondary);
+      border-top: 1px solid var(--border);
+      padding: 0.5rem 1.5rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-family: 'Rajdhani', sans-serif;
+      font-size: 0.9rem;
+      color: var(--text-muted);
+    }
+
+    /* =========================================================
+       Operador Module
+       ========================================================= */
+    .operador {
+      padding: 1.5rem;
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+
+    .operador-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 1.5rem;
+      padding-bottom: 1rem;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .operador-header-title {
+      font-family: 'Oswald', sans-serif;
+      font-size: 1.6rem;
+      font-weight: 700;
+      color: var(--accent);
+      letter-spacing: 0.1em;
+    }
+
+    .operador-station-selector {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      font-family: 'Rajdhani', sans-serif;
+      font-size: 1rem;
+      color: var(--text-secondary);
+    }
+
+    .operador-station-selector select {
+      background: var(--bg-elevated);
+      border: 1px solid var(--border);
+      color: var(--text-primary);
+      font-family: 'Rajdhani', sans-serif;
+      font-size: 1rem;
+      padding: 0.4rem 0.75rem;
+      border-radius: var(--radius);
+      cursor: pointer;
+    }
+
+    .operador-summary-cards {
+      display: flex;
+      gap: 1rem;
+      margin-bottom: 1.5rem;
+    }
+
+    .summary-card {
+      flex: 1;
+      background: var(--bg-secondary);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 1rem 1.25rem;
+      border-left: 4px solid;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+    }
+
+    .summary-card-label {
+      font-family: 'Rajdhani', sans-serif;
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      margin-bottom: 0.5rem;
+    }
+
+    .summary-card-count {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: 2.5rem;
+      font-weight: 700;
+      line-height: 1;
+    }
+
+    .summary-card-last {
+      font-family: 'Rajdhani', sans-serif;
+      font-size: 0.9rem;
+      color: var(--text-secondary);
+      margin-top: 0.25rem;
+    }
+
+    .summary-card-empty {
+      font-family: 'Rajdhani', sans-serif;
+      font-size: 0.85rem;
+      color: var(--warning);
+      margin-top: 0.25rem;
+    }
+
+    .operador-controls {
+      display: flex;
+      gap: 0.75rem;
+      margin-bottom: 1.5rem;
+      flex-wrap: wrap;
+    }
+
+    .btn {
+      font-family: 'Rajdhani', sans-serif;
+      font-size: 1rem;
+      font-weight: 700;
+      padding: 0.65rem 1.25rem;
+      border-radius: var(--radius);
+      border: none;
+      cursor: pointer;
+      transition: filter 0.15s, transform 0.1s;
+      letter-spacing: 0.03em;
+    }
+
+    .btn:hover { filter: brightness(1.1); }
+    .btn:active { transform: scale(0.97); }
+    .btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+    .btn-primary { background: var(--accent); color: #fff; font-size: 1.1rem; padding: 0.75rem 1.5rem; }
+    .btn-secondary { background: var(--bg-elevated); color: var(--text-primary); border: 1px solid var(--border); }
+    .btn-success { background: var(--success); color: #fff; }
+    .btn-info { background: #2563eb; color: #fff; }
+    .btn-danger { background: var(--danger); color: #fff; }
+
+    .call-history-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-family: 'Rajdhani', sans-serif;
+    }
+
+    .call-history-table th {
+      text-align: left;
+      padding: 0.6rem 1rem;
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .call-history-table td {
+      padding: 0.6rem 1rem;
+      font-size: 1rem;
+      border-bottom: 1px solid var(--border);
+      color: var(--text-primary);
+    }
+
+    .call-history-table tr:hover td {
+      background: var(--bg-elevated);
+    }
+
+    .ticket-badge {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: 1.2rem;
+      font-weight: 700;
+    }
+
+    .type-badge {
+      display: inline-block;
+      padding: 0.15rem 0.6rem;
+      border-radius: 999px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: #fff;
+    }
+
+    /* =========================================================
+       Admin Module
+       ========================================================= */
+    .admin { padding: 1.5rem; max-width: 1400px; margin: 0 auto; }
+    .admin-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 1.5rem; padding-bottom: 1rem; border-bottom: 1px solid var(--border); }
+    .admin-header-title { font-family: 'Oswald', sans-serif; font-size: 1.6rem; font-weight: 700; color: var(--accent); letter-spacing: 0.1em; }
+    .admin-tabs { display: flex; gap: 0.25rem; margin-bottom: 1.5rem; border-bottom: 1px solid var(--border); }
+    .admin-tab { background: none; border: none; border-bottom: 2px solid transparent; padding: 0.6rem 1.2rem; font-family: 'Rajdhani', sans-serif; font-size: 1rem; font-weight: 600; color: var(--text-secondary); cursor: pointer; transition: color 0.15s, border-color 0.15s; margin-bottom: -1px; }
+    .admin-tab:hover { color: var(--text-primary); }
+    .admin-tab.active { color: var(--accent); border-bottom-color: var(--accent); }
+    .metrics-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 1rem; margin-bottom: 1.5rem; }
+    .metric-card { background: var(--bg-secondary); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 1rem 1.25rem; }
+    .metric-label { font-family: 'Rajdhani', sans-serif; font-size: 0.8rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 0.4rem; }
+    .metric-value { font-family: 'Barlow Condensed', sans-serif; font-size: 2.2rem; font-weight: 700; line-height: 1; }
+    .hourly-chart { background: var(--bg-secondary); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 1rem 1.25rem; margin-bottom: 1.5rem; }
+    .hourly-chart-title { font-family: 'Rajdhani', sans-serif; font-size: 0.85rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 0.75rem; }
+    .hourly-bars { display: flex; align-items: flex-end; gap: 4px; height: 80px; }
+    .hourly-bar-wrap { display: flex; flex-direction: column; align-items: center; flex: 1; height: 100%; justify-content: flex-end; }
+    .hourly-bar { width: 100%; background: var(--accent); border-radius: 3px 3px 0 0; min-height: 2px; transition: height 0.3s; }
+    .hourly-bar-label { font-family: 'Rajdhani', sans-serif; font-size: 0.65rem; color: var(--text-muted); margin-top: 3px; }
+    .admin-section { background: var(--bg-secondary); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 1.25rem; margin-bottom: 1rem; }
+    .admin-section-title { font-family: 'Rajdhani', sans-serif; font-size: 0.85rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 1rem; }
+    .service-editor-row { display: flex; align-items: center; gap: 1rem; padding: 0.75rem 0; border-bottom: 1px solid var(--border); flex-wrap: wrap; }
+    .service-editor-row:last-child { border-bottom: none; }
+    .toggle { position: relative; display: inline-block; width: 44px; height: 24px; flex-shrink: 0; }
+    .toggle input { opacity: 0; width: 0; height: 0; }
+    .toggle-slider { position: absolute; cursor: pointer; inset: 0; background: var(--bg-elevated); border-radius: 24px; transition: background 0.2s; }
+    .toggle-slider:before { content: ''; position: absolute; height: 18px; width: 18px; left: 3px; bottom: 3px; background: #fff; border-radius: 50%; transition: transform 0.2s; }
+    .toggle input:checked + .toggle-slider { background: var(--success); }
+    .toggle input:checked + .toggle-slider:before { transform: translateX(20px); }
+    .admin-input { background: var(--bg-elevated); border: 1px solid var(--border); color: var(--text-primary); font-family: 'Rajdhani', sans-serif; font-size: 0.95rem; padding: 0.4rem 0.75rem; border-radius: var(--radius); }
+    .admin-input:focus { outline: none; border-color: var(--accent); }
+    .slide-editor-row { display: flex; align-items: center; gap: 0.75rem; padding: 0.75rem 0; border-bottom: 1px solid var(--border); flex-wrap: wrap; }
+    .slide-editor-row:last-child { border-bottom: none; }
+    .slide-preview { width: 48px; height: 36px; border-radius: var(--radius); flex-shrink: 0; background-size: cover; background-position: center; border: 1px solid var(--border); }
+    .station-editor-row { display: flex; align-items: center; gap: 0.75rem; padding: 0.5rem 0; border-bottom: 1px solid var(--border); }
+    .station-editor-row:last-child { border-bottom: none; }
+    .settings-form { display: flex; flex-direction: column; gap: 1rem; }
+    .settings-field { display: flex; flex-direction: column; gap: 0.3rem; }
+    .settings-label { font-family: 'Rajdhani', sans-serif; font-size: 0.85rem; color: var(--text-muted); }
+    .settings-input { background: var(--bg-elevated); border: 1px solid var(--border); color: var(--text-primary); font-family: 'Rajdhani', sans-serif; font-size: 1rem; padding: 0.5rem 0.75rem; border-radius: var(--radius); width: 100%; }
+    .settings-input:focus { outline: none; border-color: var(--accent); }
+    .reset-buttons { display: flex; gap: 1rem; margin-top: 1rem; flex-wrap: wrap; }
+    .status-badge { display: inline-block; padding: 0.2rem 0.75rem; border-radius: 999px; font-family: 'Rajdhani', sans-serif; font-size: 0.85rem; font-weight: 600; }
+    .status-ok { background: rgba(5,150,105,0.15); color: var(--success); border: 1px solid var(--success); }
+    .status-partial { background: rgba(217,119,6,0.15); color: var(--warning); border: 1px solid var(--warning); }
+    .status-off { background: rgba(220,38,38,0.15); color: var(--danger); border: 1px solid var(--danger); }
+  </style>
+
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700&family=Oswald:wght@400;500;700&family=Rajdhani:wght@400;500;600;700&display=swap" rel="stylesheet" />
+
+  <!-- React 18 -->
+  <script src="https://unpkg.com/react@18/umd/react.development.js" crossorigin></script>
+  <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js" crossorigin></script>
+
+  <!-- Babel Standalone -->
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+  <!-- Firebase SDK -->
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js"></script>
+</head>
+<body>
+  <div id="root"></div>
+
+  <!-- Firebase config + sync (configure sua chave aqui) -->
+  <script>
+    // =========================================================
+    // FIREBASE CONFIG — substitua pelos dados do seu projeto
+    // Crie em: https://console.firebase.google.com
+    // =========================================================
+    const FIREBASE_CONFIG = {
+      apiKey:            "COLE_SUA_API_KEY_AQUI",
+      authDomain:        "SEU_PROJETO.firebaseapp.com",
+      databaseURL:       "https://SEU_PROJETO-default-rtdb.firebaseio.com",
+      projectId:         "SEU_PROJETO",
+      storageBucket:     "SEU_PROJETO.appspot.com",
+      messagingSenderId: "SEU_SENDER_ID",
+      appId:             "SEU_APP_ID"
+    };
+
+    // Detecta modo pela URL: ?mode=totem | painel | operador | admin
+    const URL_PARAMS  = new URLSearchParams(window.location.search);
+    window.STATION_MODE = URL_PARAMS.get('mode') || null; // null = exibe todos os módulos
+
+    // Inicializa Firebase se a config estiver preenchida
+    window.FB_READY = false;
+    window.FB_DB    = null;
+
+    try {
+      if (FIREBASE_CONFIG.apiKey && FIREBASE_CONFIG.apiKey !== 'COLE_SUA_API_KEY_AQUI') {
+        firebase.initializeApp(FIREBASE_CONFIG);
+        window.FB_DB    = firebase.database();
+        window.FB_READY = true;
+        console.log('[Firebase] Conectado com sucesso.');
+      } else {
+        console.warn('[Firebase] Config não preenchida — rodando em modo local (sem sincronização).');
+      }
+    } catch(e) {
+      console.error('[Firebase] Erro ao inicializar:', e);
+    }
+
+    // Publica estado no Firebase
+    window.fbPush = function(state) {
+      if (!window.FB_READY) return;
+      window.FB_DB.ref('balcao/state').set(state).catch(e => console.error('[Firebase] Erro ao salvar:', e));
+    };
+
+    // Escuta mudanças do Firebase e atualiza estado local
+    window.fbListen = function(onUpdate) {
+      if (!window.FB_READY) return;
+      window.FB_DB.ref('balcao/state').on('value', snap => {
+        const data = snap.val();
+        if (data) {
+          // Mescla sem sobrescrever referência (mantém reatividade)
+          Object.assign(window.APP_STATE, data);
+          onUpdate();
+        }
+      });
+    };
+  </script>
+
+  <script type="text/babel">
+    // =========================================================
+    // FACTORY STATE — estado inicial de fábrica
+    // =========================================================
+    const FACTORY_STATE = {
+      config: {
+        unitName: 'Minha Empresa',
+        sectorName: 'BALCÃO',
+        welcomeMessage: 'Seja bem-vindo! Retire sua senha e aguarde ser chamado.',
+        footerMessage: 'BALCÃO — Atendimento de Segunda a Sexta, 8h às 18h',
+        workingHours: { start: '08:00', end: '18:00' },
+        pauseMediaOnCall: true,
+      },
+      services: [
+        { id: 'general',  label: 'Geral',        color: '#2563eb', active: true, counter: 0, priority: 1 },
+        { id: 'priority', label: 'Preferencial',  color: '#059669', active: true, counter: 0, priority: 2 },
+      ],
+      stations: [
+        { id: 1, label: 'Guichê 1', active: true },
+        { id: 2, label: 'Guichê 2', active: true },
+      ],
+      queue: [],
+      called: [],
+      currentCall: null,
+      mediaItems: [
+        { id: '1', title: 'Bem-vindo ao BALCÃO',        caption: '',                          url: '', fallbackColor: '#1e3a8a', duration: 6, active: true, order: 1 },
+        { id: '2', title: 'Horário: 8h às 18h',         caption: 'Seg a Sex',                 url: '', fallbackColor: '#064e3b', duration: 6, active: true, order: 2 },
+        { id: '3', title: 'Atendimento Preferencial',   caption: 'Idoso · PCD · Gestante',    url: '', fallbackColor: '#4c1d95', duration: 6, active: true, order: 3 },
+      ],
+    };
+
+    // =========================================================
+    // APP STATE — cópia profunda do estado de fábrica
+    // =========================================================
+    window.APP_STATE = JSON.parse(JSON.stringify(FACTORY_STATE));
+
+    // =========================================================
+    // dispatchUpdate — será sobrescrito pelo componente App
+    // =========================================================
+    window.dispatchUpdate = () => {};
+
+    // =========================================================
+    // generateTicket — Task 4.1
+    // =========================================================
+    function generateTicket(serviceId) {
+      const s = window.APP_STATE;
+      const service = s.services.find(sv => sv.id === serviceId);
+      if (!service || !service.active) return null;
+
+      // Ciclo 001–999
+      const nextCounter = (service.counter % 999) + 1;
+      service.counter = nextCounter;
+      const ticket = String(nextCounter).padStart(3, '0');
+
+      s.queue.push({
+        id: crypto.randomUUID(),
+        ticket,
+        serviceId,
+        time: Date.now(),
+      });
+
+      window.dispatchUpdate();
+      return ticket;
+    }
+
+    // =========================================================
+    // callNext — Task 4.4
+    // =========================================================
+    function callNext(stationId, serviceId) {
+      const s = window.APP_STATE;
+      const station = s.stations.find(st => st.id === stationId);
+      if (!station || !station.active) return;
+
+      let candidate = null;
+
+      if (serviceId) {
+        // Chamada manual por tipo específico
+        candidate = s.queue.find(q => q.serviceId === serviceId) || null;
+      } else {
+        // Respeita prioridade: maior priority primeiro, desempate por menor time
+        const activeServiceIds = s.services
+          .filter(sv => sv.active)
+          .sort((a, b) => b.priority - a.priority)
+          .map(sv => sv.id);
+
+        for (const sid of activeServiceIds) {
+          const item = s.queue.find(q => q.serviceId === sid);
+          if (item) { candidate = item; break; }
+        }
+
+        // Desempate por time se mesma priority
+        if (!candidate) return;
+      }
+
+      if (!candidate) return;
+
+      s.queue = s.queue.filter(q => q.id !== candidate.id);
+
+      const call = {
+        ticket: candidate.ticket,
+        serviceId: candidate.serviceId,
+        stationId,
+        time: Date.now(),
+      };
+
+      s.called.push(call);
+      s.currentCall = { ticket: candidate.ticket, serviceId: candidate.serviceId, stationId };
+
+      window.dispatchUpdate();
+    }
+
+    // =========================================================
+    // repeatCall — Task 4.9
+    // =========================================================
+    function repeatCall() {
+      if (!window.APP_STATE.currentCall) return;
+      window.dispatchUpdate();
+    }
+
+    // =========================================================
+    // exportHistory — Task 4.10
+    // =========================================================
+    function exportHistory() {
+      const data = window.APP_STATE.called.map(c => ({
+        ticket: c.ticket,
+        serviceId: c.serviceId,
+        stationId: c.stationId,
+        time: c.time,
+      }));
+      const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `historico-balcao-${new Date().toISOString().slice(0,10)}.json`;
+      a.click();
+      URL.revokeObjectURL(url);
+    }
+
+    // =========================================================
+    // dailyReset / fullReset — Task 4.12
+    // =========================================================
+    function dailyReset() {
+      const s = window.APP_STATE;
+      s.queue = [];
+      s.called = [];
+      s.currentCall = null;
+      s.services.forEach(sv => { sv.counter = 0; });
+      window.dispatchUpdate();
+    }
+
+    function fullReset() {
+      window.APP_STATE = JSON.parse(JSON.stringify(FACTORY_STATE));
+      window.dispatchUpdate();
+    }
+
+    // =========================================================
+    // Placeholders de módulo (serão substituídos nas próximas tasks)
+    // =========================================================
+    // =========================================================
+    // TicketModal — Task 6.3
+    // =========================================================
+    // printTicket — impressão automática do comprovante
+    // =========================================================
+    // printTicket — impressão direta (Electron) ou via janela (browser)
+    // =========================================================
+    function printTicket(ticket, service, onPaperOut) {
+      const s = window.APP_STATE;
+      const queueAhead = s.queue.filter(q => q.serviceId === service.id).length;
+      const now = new Date();
+      const dateStr = now.toLocaleDateString('pt-BR');
+      const timeStr = now.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+
+      const html = `<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8"/>
+<title>Comprovante ${ticket}</title>
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { font-family: Arial, Helvetica, sans-serif; background:#fff; color:#000; width:72mm; margin:0; font-weight:700; }
+  .receipt { width:72mm; padding:4mm 2mm 6mm 2mm; text-align:center; display:inline-block; }
+  .unit { font-size:10pt; font-weight:700; text-transform:uppercase; letter-spacing:0.08em; margin-bottom:1mm; }
+  .sector { font-size:18pt; font-weight:900; letter-spacing:0.15em; margin-bottom:2mm; }
+  .divider { border:none; border-top:2px solid #000; margin:3mm 0; }
+  .divider-dashed { border:none; border-top:1px dashed #000; margin:3mm 0; }
+  .ticket-num { font-size:64pt; font-weight:900; line-height:1; letter-spacing:0.05em; }
+  .service-label { display:inline-block; border:2px solid #000; font-size:12pt; font-weight:900; padding:1mm 5mm; border-radius:2mm; margin:2mm 0 3mm; letter-spacing:0.08em; text-transform:uppercase; }
+  .info { font-size:10pt; font-weight:700; margin-bottom:2mm; }
+  .info-small { font-size:9pt; font-weight:700; color:#222; margin-bottom:1.5mm; }
+  .welcome { font-size:9pt; font-weight:700; margin-top:3mm; line-height:1.5; }
+  @page { size:80mm auto; margin:0; }
+  @media print { html, body { width:72mm; margin:0; } }
+</style>
+</head>
+<body>
+<div class="receipt">
+  <div class="unit">${s.config.unitName}</div>
+  <div class="sector">${s.config.sectorName}</div>
+  <hr class="divider"/>
+  <div class="ticket-num">${ticket}</div>
+  <div><span class="service-label">${service.label}</span></div>
+  <hr class="divider-dashed"/>
+  <div class="info">${dateStr} | ${timeStr}</div>
+  <div class="info-small">Senhas na frente: ${queueAhead}</div>
+  <hr class="divider-dashed"/>
+  <div class="welcome">${s.config.welcomeMessage}</div>
+</div>
+</body>
+</html>`;
+
+      // Electron: impressão direta sem diálogo
+      if (window.electronAPI && window.electronAPI.isElectron) {
+        window.electronAPI.printTicket(html).then(result => {
+          if (!result.success && onPaperOut) {
+            // Falha na impressão — provável falta de papel
+            onPaperOut('out');
+          }
+        });
+        return;
+      }
+
+      // Browser fallback: abre janela e chama window.print()
+      const htmlWithScript = html.replace('</body>', `<script>
+  var printed = false;
+  window.onbeforeprint = function() { printed = true; };
+  window.onload = function() {
+    window.print();
+    window.onafterprint = function() {
+      if (window.opener) window.opener.postMessage({ type: 'PRINT_DONE', printed: printed }, '*');
+      window.close();
+    };
+    setTimeout(function() {
+      if (window.opener) window.opener.postMessage({ type: 'PRINT_DONE', printed: printed }, '*');
+      window.close();
+    }, 15000);
+  };
+<\/script></body>`);
+
+      const win = window.open('', '_blank', 'width=400,height=600');
+      if (!win) return;
+
+      const handler = (e) => {
+        if (e.data && e.data.type === 'PRINT_DONE') {
+          window.removeEventListener('message', handler);
+          if (!e.data.printed && onPaperOut) onPaperOut('out');
+        }
+      };
+      window.addEventListener('message', handler);
+      win.document.write(htmlWithScript);
+      win.document.close();
+    }
+
+    // =========================================================
+    function TicketModal({ ticket, service, onClose }) {
+      const s = window.APP_STATE;
+      const queueAhead = s.queue.filter(q => q.serviceId === service.id).length;
+      const now = new Date();
+      const dateStr = now.toLocaleDateString('pt-BR');
+      const timeStr = now.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+
+      React.useEffect(() => {
+        const t = setTimeout(onClose, 6000);
+        return () => clearTimeout(t);
+      }, []);
+
+      return (
+        <div className="modal-overlay" onClick={onClose}>
+          <div className="modal-ticket" onClick={e => e.stopPropagation()}>
+            <div className="modal-timer-bar" />
+            <div className="modal-sector">{s.config.sectorName}</div>
+            <div className="modal-ticket-number" style={{ color: service.color }}>{ticket}</div>
+            <span className="modal-service-label" style={{ background: service.color }}>{service.label}</span>
+            <div className="modal-info">📅 {dateStr} às {timeStr}</div>
+            <div className="modal-info">⏳ {queueAhead} senha{queueAhead !== 1 ? 's' : ''} à sua frente</div>
+            <div className="modal-welcome">{s.config.welcomeMessage}</div>
+            <button className="modal-close-btn" onClick={onClose}>Fechar</button>
+          </div>
+        </div>
+      );
+    }
+
+    // =========================================================
+    // ServiceButton — Task 6.2
+    // =========================================================
+    function ServiceButton({ service, onTicketGenerated, onPaperOut }) {
+      const icon = service.id === 'priority' ? '⭐' : '🎫';
+      return (
+        <button
+          className="service-btn"
+          style={{ background: service.color }}
+          onClick={() => {
+            const ticket = generateTicket(service.id);
+            if (ticket) {
+              printTicket(ticket, service, onPaperOut);
+              onTicketGenerated(ticket, service);
+            }
+          }}
+        >
+          <span className="service-btn-icon">{icon}</span>
+          <span>{service.label}</span>
+        </button>
+      );
+    }
+
+    // =========================================================
+    // PaperOutCard — card de aviso de papel vazio
+    // =========================================================
+    function PaperOutCard({ status, onDismiss }) {
+      const isNear = status === 'near';
+      return (
+        <div className="paper-out-overlay">
+          <div className="paper-out-card">
+            <span className="paper-out-icon">{isNear ? '⚠️' : '🖨️'}</span>
+            <div className="paper-out-title">
+              {isNear ? 'Papel Acabando' : 'Sem Papel'}
+            </div>
+            <div className="paper-out-msg">
+              {isNear
+                ? 'O papel da impressora está acabando. Avise o responsável para repor em breve.'
+                : 'A impressora está sem papel. Não é possível emitir senhas no momento.\n\nAvise o responsável para repor o papel.'}
+            </div>
+            <button className="paper-out-dismiss" onClick={onDismiss}>
+              {isNear ? 'Entendido' : 'Papel Reposto — Continuar'}
+            </button>
+          </div>
+        </div>
+      );
+    }
+
+    // =========================================================
+    // TotemModule — Tasks 6.1, 6.2, 6.3
+    // =========================================================
+    function TotemModule() {
+      const s = window.APP_STATE;
+      const [modal, setModal] = React.useState(null);
+      const [paperStatus, setPaperStatus] = React.useState(null); // null | 'near' | 'out'
+      const activeServices = s.services.filter(sv => sv.active);
+      const isElectron = !!(window.electronAPI && window.electronAPI.isElectron);
+
+      React.useEffect(() => {
+        if (isElectron) {
+          // Electron: escuta status real da impressora via IPC
+          window.electronAPI.getPaperStatus().then(status => {
+            if (status !== 'ok') setPaperStatus(status);
+          });
+          window.electronAPI.onPaperStatusChange((status) => {
+            setPaperStatus(status === 'ok' ? null : status);
+          });
+          return () => window.electronAPI.offPaperStatusChange();
+        } else {
+          // Browser: polling via WebUSB (fallback, limitado)
+          const poll = async () => {
+            if (!navigator.usb) return;
+            try {
+              const devices = await navigator.usb.getDevices();
+              const printer = devices.find(d => d.vendorId === 0x0DD4);
+              if (!printer) return;
+              await printer.open();
+              if (printer.configuration === null) await printer.selectConfiguration(1);
+              await printer.claimInterface(0);
+              await printer.transferOut(1, new Uint8Array([0x10, 0x04, 0x04]));
+              const result = await printer.transferIn(1, 1);
+              const byte = result.data.getUint8(0);
+              await printer.releaseInterface(0);
+              await printer.close();
+              const out  = (byte & 0x08) !== 0;
+              const near = (byte & 0x04) !== 0;
+              setPaperStatus(out ? 'out' : near ? 'near' : null);
+            } catch { /* WebUSB não disponível em file:// */ }
+          };
+          poll();
+          const interval = setInterval(poll, 30000);
+          return () => clearInterval(interval);
+        }
+      }, [isElectron]);
+
+      return (
+        <div className="totem">
+          <div className="totem-sector">{s.config.sectorName}</div>
+          <div className="totem-instruction">Toque para retirar sua senha</div>
+          {activeServices.length === 0 ? (
+            <div className="totem-unavailable">⚠️ Sistema temporariamente indisponível</div>
+          ) : (
+            <div className="totem-buttons">
+              {activeServices.map(svc => (
+                <ServiceButton
+                  key={svc.id}
+                  service={svc}
+                  onPaperOut={(status) => setPaperStatus(status)}
+                  onTicketGenerated={(ticket, service) => {
+                    if (paperStatus === 'out') return;
+                    setModal({ ticket, service });
+                  }}
+                />
+              ))}
+            </div>
+          )}
+          {modal && (
+            <TicketModal
+              ticket={modal.ticket}
+              service={modal.service}
+              onClose={() => setModal(null)}
+            />
+          )}
+          {paperStatus && (
+            <PaperOutCard
+              status={paperStatus}
+              onDismiss={() => setPaperStatus(null)}
+            />
+          )}
+        </div>
+      );
+    }
+
+    // =========================================================
+    // MediaCarousel — Tasks 7.5, 7.6
+    // =========================================================
+    function MediaCarousel({ paused }) {
+      const s = window.APP_STATE;
+      const activeSlides = s.mediaItems
+        .filter(m => m.active)
+        .sort((a, b) => a.order - b.order);
+      const [idx, setIdx] = React.useState(0);
+
+      React.useEffect(() => {
+        if (activeSlides.length === 0 || paused) return;
+        const slide = activeSlides[idx] || activeSlides[0];
+        const duration = (slide?.duration || 6) * 1000;
+        const t = setTimeout(() => setIdx(i => (i + 1) % activeSlides.length), duration);
+        return () => clearTimeout(t);
+      }, [idx, paused, activeSlides.length]);
+
+      if (activeSlides.length === 0) return null;
+      const slide = activeSlides[idx % activeSlides.length];
+
+      const bgStyle = slide.url
+        ? { backgroundImage: `url(${slide.url})` }
+        : { background: slide.fallbackColor };
+
+      return (
+        <div className="media-carousel">
+          <div className="media-slide" style={bgStyle}>
+            <div className="media-slide-overlay" />
+            <div className="media-slide-content">
+              <div className="media-slide-title">{slide.title}</div>
+              {slide.caption && <div className="media-slide-caption">{slide.caption}</div>}
+            </div>
+          </div>
+          <div className="media-dots">
+            {activeSlides.map((_, i) => (
+              <div key={i} className={`media-dot${i === idx % activeSlides.length ? ' active' : ''}`} />
+            ))}
+          </div>
+        </div>
+      );
+    }
+
+    // =========================================================
+    // PainelModule — Tasks 7.1, 7.2, 7.3, 7.5, 7.6, 7.7
+    // =========================================================
+    function PainelModule() {
+      const s = window.APP_STATE;
+      const [flash, setFlash] = React.useState(false);
+      const [clock, setClock] = React.useState(new Date());
+      const [mediaPaused, setMediaPaused] = React.useState(false);
+      const prevCallRef = React.useRef(null);
+
+      // Clock
+      React.useEffect(() => {
+        const t = setInterval(() => setClock(new Date()), 1000);
+        return () => clearInterval(t);
+      }, []);
+
+      // Flash on new call
+      React.useEffect(() => {
+        const cur = s.currentCall;
+        const prev = prevCallRef.current;
+        if (cur && JSON.stringify(cur) !== JSON.stringify(prev)) {
+          prevCallRef.current = cur;
+          setFlash(true);
+          if (s.config.pauseMediaOnCall) {
+            setMediaPaused(true);
+            setTimeout(() => setMediaPaused(false), 3000);
+          }
+          setTimeout(() => setFlash(false), 1200);
+        }
+      });
+
+      const cur = s.currentCall;
+      const curService = cur ? s.services.find(sv => sv.id === cur.serviceId) : null;
+      const curStation = cur ? s.stations.find(st => st.id === cur.stationId) : null;
+
+      // Recent calls: last 5 from called (excluding current)
+      const recentCalls = [...s.called].reverse().slice(0, 5);
+
+      const dateStr = clock.toLocaleDateString('pt-BR', { weekday: 'short', day: '2-digit', month: '2-digit', year: 'numeric' });
+      const timeStr = clock.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+
+      return (
+        <div className="painel">
+          <div className="painel-header">
+            <span className="painel-header-sector">{s.config.sectorName}</span>
+            <span style={{ fontFamily: 'Rajdhani', fontSize: '0.9rem', color: 'var(--text-muted)' }}>{s.config.unitName}</span>
+          </div>
+          <div className="painel-body">
+            {/* Main area */}
+            <div className="painel-main">
+              <div className="current-call-area">
+                {cur ? (
+                  <>
+                    <div className="current-call-label">Senha Atual</div>
+                    <div
+                      className={`current-call-number${flash ? ' flash' : ''}`}
+                      style={{ color: curService?.color || 'var(--accent)' }}
+                    >
+                      {cur.ticket}
+                    </div>
+                    <span
+                      className="current-call-type"
+                      style={{ background: curService?.color || 'var(--accent)' }}
+                    >
+                      {curService?.label || cur.serviceId}
+                    </span>
+                    <div className="current-call-station">
+                      {curStation?.label || `Guichê ${cur.stationId}`}
+                    </div>
+                  </>
+                ) : (
+                  <div className="painel-waiting">
+                    <div style={{ fontSize: '4rem' }}>🎫</div>
+                    <div className="painel-waiting-text">Aguardando chamada...</div>
+                  </div>
+                )}
+              </div>
+              {/* Queue counters */}
+              <div className="queue-counters">
+                {s.services.filter(sv => sv.active).map(svc => {
+                  const count = s.queue.filter(q => q.serviceId === svc.id).length;
+                  return (
+                    <div key={svc.id} className="queue-counter-card" style={{ borderColor: svc.color }}>
+                      <div className="queue-counter-value" style={{ color: svc.color }}>{count}</div>
+                      <div className="queue-counter-label">{svc.label} aguardando</div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+            {/* Sidebar */}
+            <div className="painel-sidebar">
+              <div className="recent-calls">
+                <div className="recent-calls-title">Últimas chamadas</div>
+                {recentCalls.length === 0 ? (
+                  <div style={{ color: 'var(--text-muted)', fontSize: '0.9rem', fontFamily: 'Rajdhani' }}>Nenhuma chamada ainda</div>
+                ) : recentCalls.map((c, i) => {
+                  const svc = s.services.find(sv => sv.id === c.serviceId);
+                  const st = s.stations.find(st => st.id === c.stationId);
+                  const t = new Date(c.time).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+                  return (
+                    <div key={i} className="recent-call-item">
+                      <span className="recent-call-ticket" style={{ color: svc?.color }}>{c.ticket}</span>
+                      <span className="recent-call-meta">{svc?.label} · {st?.label || `G${c.stationId}`} · {t}</span>
+                    </div>
+                  );
+                })}
+              </div>
+              <MediaCarousel paused={mediaPaused} />
+            </div>
+          </div>
+          <div className="painel-footer">
+            <span>{s.config.footerMessage}</span>
+            <span>{dateStr} · {timeStr}</span>
+          </div>
+        </div>
+      );
+    }
+
+    // =========================================================
+    // OperadorModule — Tasks 8.1, 8.2, 8.3
+    // =========================================================
+    function OperadorModule() {
+      const s = window.APP_STATE;
+      const activeStations = s.stations.filter(st => st.active);
+      const [stationId, setStationId] = React.useState(activeStations[0]?.id || 1);
+
+      const allEmpty = s.queue.length === 0;
+
+      return (
+        <div className="operador">
+          {/* Header */}
+          <div className="operador-header">
+            <div className="operador-header-title">BALCÃO — Operador</div>
+            <div className="operador-station-selector">
+              <span>Guichê:</span>
+              <select value={stationId} onChange={e => setStationId(Number(e.target.value))}>
+                {activeStations.map(st => (
+                  <option key={st.id} value={st.id}>{st.label}</option>
+                ))}
+              </select>
+            </div>
+          </div>
+
+          {/* Summary cards */}
+          <div className="operador-summary-cards">
+            {s.services.filter(sv => sv.active).map(svc => {
+              const count = s.queue.filter(q => q.serviceId === svc.id).length;
+              const lastCalled = [...s.called].reverse().find(c => c.serviceId === svc.id);
+              return (
+                <div key={svc.id} className="summary-card" style={{ borderLeftColor: svc.color }}>
+                  <div className="summary-card-label">{svc.label}</div>
+                  <div className="summary-card-count" style={{ color: svc.color }}>{count}</div>
+                  {count === 0
+                    ? <div className="summary-card-empty">⚠ Fila vazia</div>
+                    : <div className="summary-card-last">na fila</div>
+                  }
+                  {lastCalled && (
+                    <div className="summary-card-last">Última: <strong>{lastCalled.ticket}</strong></div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+
+          {/* Controls */}
+          <div className="operador-controls">
+            <button
+              className="btn btn-primary"
+              disabled={allEmpty}
+              onClick={() => callNext(stationId)}
+            >
+              🔔 Chamar Próxima Senha
+            </button>
+            <button
+              className="btn btn-secondary"
+              disabled={!s.currentCall}
+              onClick={() => repeatCall()}
+            >
+              🔁 Repetir Chamada
+            </button>
+            {s.services.filter(sv => sv.active).map(svc => {
+              const empty = s.queue.filter(q => q.serviceId === svc.id).length === 0;
+              return (
+                <button
+                  key={svc.id}
+                  className="btn"
+                  style={{ background: svc.color, color: '#fff', opacity: empty ? 0.4 : 1 }}
+                  disabled={empty}
+                  onClick={() => callNext(stationId, svc.id)}
+                >
+                  Chamar {svc.label}
+                </button>
+              );
+            })}
+          </div>
+
+          {/* Call history table */}
+          <div style={{ background: 'var(--bg-secondary)', borderRadius: 'var(--radius-lg)', border: '1px solid var(--border)', overflow: 'hidden' }}>
+            <table className="call-history-table">
+              <thead>
+                <tr>
+                  <th>Senha</th>
+                  <th>Tipo</th>
+                  <th>Guichê</th>
+                  <th>Horário</th>
+                </tr>
+              </thead>
+              <tbody>
+                {s.called.length === 0 ? (
+                  <tr><td colSpan="4" style={{ color: 'var(--text-muted)', textAlign: 'center', padding: '2rem' }}>Nenhuma chamada realizada</td></tr>
+                ) : [...s.called].reverse().map((c, i) => {
+                  const svc = s.services.find(sv => sv.id === c.serviceId);
+                  const st = s.stations.find(st => st.id === c.stationId);
+                  const t = new Date(c.time).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+                  return (
+                    <tr key={i}>
+                      <td><span className="ticket-badge" style={{ color: svc?.color }}>{c.ticket}</span></td>
+                      <td><span className="type-badge" style={{ background: svc?.color }}>{svc?.label || c.serviceId}</span></td>
+                      <td>{st?.label || `Guichê ${c.stationId}`}</td>
+                      <td style={{ color: 'var(--text-muted)' }}>{t}</td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      );
+    }
+
+    // =========================================================
+    // AdminModule — Tasks 10.1, 10.2, 10.3, 11.1, 11.2, 11.4
+    // =========================================================
+    function AdminModule() {
+      const s = window.APP_STATE;
+      const [tab, setTab] = React.useState('dashboard');
+
+      const tabs = [
+        { id: 'dashboard', label: '📊 Dashboard' },
+        { id: 'services',  label: '🎫 Tipos de Senha' },
+        { id: 'media',     label: '🖼 Mídia Indoor' },
+        { id: 'stations',  label: '🏢 Guichês' },
+        { id: 'settings',  label: '⚙️ Configurações' },
+      ];
+
+      return (
+        <div className="admin">
+          <div className="admin-header">
+            <div className="admin-header-title">BALCÃO — Administrador</div>
+          </div>
+          <div className="admin-tabs">
+            {tabs.map(t => (
+              <button key={t.id} className={`admin-tab${tab === t.id ? ' active' : ''}`} onClick={() => setTab(t.id)}>{t.label}</button>
+            ))}
+          </div>
+          {tab === 'dashboard'  && <AdminDashboard />}
+          {tab === 'services'   && <AdminServices />}
+          {tab === 'media'      && <AdminMedia />}
+          {tab === 'stations'   && <AdminStations />}
+          {tab === 'settings'   && <AdminSettings />}
+        </div>
+      );
+    }
+
+    // --- Dashboard Tab ---
+    function AdminDashboard() {
+      const s = window.APP_STATE;
+      const activeCount = s.services.filter(sv => sv.active).length;
+      const statusLabel = activeCount === 2 ? 'Operacional' : activeCount === 1 ? 'Parcial' : 'Indisponível';
+      const statusClass = activeCount === 2 ? 'status-ok' : activeCount === 1 ? 'status-partial' : 'status-off';
+
+      // Hourly chart: count called per hour (0-23)
+      const hourCounts = Array(24).fill(0);
+      s.called.forEach(c => { const h = new Date(c.time).getHours(); hourCounts[h]++; });
+      const maxH = Math.max(...hourCounts, 1);
+      const now = new Date().getHours();
+
+      const totalIssued = s.services.reduce((a, sv) => a + sv.counter, 0);
+      const totalCalled = s.called.length;
+      const waiting = s.queue.length;
+      const activeStations = s.stations.filter(st => st.active).length;
+
+      return (
+        <div>
+          <div className="metrics-grid">
+            <div className="metric-card"><div className="metric-label">Emitidas hoje</div><div className="metric-value" style={{color:'var(--accent)'}}>{totalIssued}</div></div>
+            <div className="metric-card"><div className="metric-label">Chamadas hoje</div><div className="metric-value" style={{color:'var(--success)'}}>{totalCalled}</div></div>
+            <div className="metric-card"><div className="metric-label">Aguardando</div><div className="metric-value" style={{color:'var(--warning)'}}>{waiting}</div></div>
+            <div className="metric-card"><div className="metric-label">Guichês ativos</div><div className="metric-value">{activeStations}</div></div>
+            {s.services.filter(sv => sv.active).map(svc => (
+              <div key={svc.id} className="metric-card">
+                <div className="metric-label">{svc.label} na fila</div>
+                <div className="metric-value" style={{color: svc.color}}>{s.queue.filter(q => q.serviceId === svc.id).length}</div>
+              </div>
+            ))}
+            <div className="metric-card"><div className="metric-label">Status</div><div style={{marginTop:'0.4rem'}}><span className={`status-badge ${statusClass}`}>{statusLabel}</span></div></div>
+          </div>
+          <div className="hourly-chart">
+            <div className="hourly-chart-title">Emissões por hora (hoje)</div>
+            <div className="hourly-bars">
+              {hourCounts.map((v, h) => (
+                <div key={h} className="hourly-bar-wrap">
+                  <div className="hourly-bar" style={{height: `${(v/maxH)*100}%`, background: h === now ? 'var(--warning)' : 'var(--accent)'}} title={`${h}h: ${v}`} />
+                  {h % 4 === 0 && <div className="hourly-bar-label">{h}h</div>}
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    // --- Services Tab ---
+    function AdminServices() {
+      const s = window.APP_STATE;
+      const [editing, setEditing] = React.useState({});
+
+      const update = (id, field, val) => {
+        const svc = s.services.find(sv => sv.id === id);
+        if (svc) { svc[field] = val; window.dispatchUpdate(); }
+      };
+
+      return (
+        <div>
+          <div className="admin-section">
+            <div className="admin-section-title">Tipos de Senha</div>
+            {s.services.map(svc => (
+              <div key={svc.id} className="service-editor-row">
+                <label className="toggle">
+                  <input type="checkbox" checked={svc.active} onChange={e => update(svc.id, 'active', e.target.checked)} />
+                  <span className="toggle-slider" />
+                </label>
+                <div style={{width:16,height:16,borderRadius:'50%',background:svc.color,flexShrink:0}} />
+                {editing[svc.id] ? (
+                  <>
+                    <input className="admin-input" style={{width:120}} value={svc.label} onChange={e => update(svc.id, 'label', e.target.value)} placeholder="Label" />
+                    <input type="color" value={svc.color} onChange={e => update(svc.id, 'color', e.target.value)} style={{width:36,height:28,border:'none',background:'none',cursor:'pointer'}} />
+                    <select className="admin-input" value={svc.priority} onChange={e => update(svc.id, 'priority', Number(e.target.value))}>
+                      <option value={1}>Prioridade 1 (menor)</option>
+                      <option value={2}>Prioridade 2 (maior)</option>
+                    </select>
+                    <button className="btn btn-primary" style={{padding:'0.3rem 0.75rem',fontSize:'0.85rem'}} onClick={() => setEditing(e => ({...e, [svc.id]: false}))}>Salvar</button>
+                  </>
+                ) : (
+                  <>
+                    <span style={{fontFamily:'Rajdhani',fontWeight:600,fontSize:'1rem',minWidth:100}}>{svc.label}</span>
+                    <span style={{fontFamily:'Rajdhani',fontSize:'0.85rem',color:'var(--text-muted)'}}>Contador: {svc.counter}</span>
+                    <span style={{fontFamily:'Rajdhani',fontSize:'0.85rem',color:'var(--text-muted)'}}>Prioridade: {svc.priority}</span>
+                    <button className="btn btn-secondary" style={{padding:'0.3rem 0.75rem',fontSize:'0.85rem'}} onClick={() => setEditing(e => ({...e, [svc.id]: true}))}>Editar</button>
+                    <button className="btn btn-danger" style={{padding:'0.3rem 0.75rem',fontSize:'0.85rem'}} onClick={() => { if(window.confirm(`Zerar contador de ${svc.label}?`)) { update(svc.id, 'counter', 0); } }}>Zerar Contador</button>
+                  </>
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
+      );
+    }
+
+    // --- Media Tab ---
+    function AdminMedia() {
+      const s = window.APP_STATE;
+      const [, forceRender] = React.useState(0);
+      const refresh = () => { window.dispatchUpdate(); forceRender(n => n+1); };
+
+      const updateSlide = (id, field, val) => {
+        const slide = s.mediaItems.find(m => m.id === id);
+        if (slide) { slide[field] = val; refresh(); }
+      };
+
+      const addSlide = () => {
+        const maxOrder = s.mediaItems.reduce((a, m) => Math.max(a, m.order), 0);
+        s.mediaItems.push({ id: crypto.randomUUID(), title: 'Novo Slide', caption: '', url: '', fallbackColor: '#1e293b', duration: 6, active: true, order: maxOrder + 1 });
+        refresh();
+      };
+
+      const removeSlide = (id) => {
+        if (window.confirm('Excluir este slide?')) { s.mediaItems = s.mediaItems.filter(m => m.id !== id); refresh(); }
+      };
+
+      const moveSlide = (id, dir) => {
+        const sorted = [...s.mediaItems].sort((a,b) => a.order - b.order);
+        const idx = sorted.findIndex(m => m.id === id);
+        const swapIdx = idx + dir;
+        if (swapIdx < 0 || swapIdx >= sorted.length) return;
+        const tmp = sorted[idx].order;
+        sorted[idx].order = sorted[swapIdx].order;
+        sorted[swapIdx].order = tmp;
+        refresh();
+      };
+
+      const sorted = [...s.mediaItems].sort((a,b) => a.order - b.order);
+
+      return (
+        <div>
+          <div className="admin-section" style={{marginBottom:'0.75rem'}}>
+            <label style={{display:'flex',alignItems:'center',gap:'0.75rem',fontFamily:'Rajdhani',fontSize:'1rem'}}>
+              <label className="toggle">
+                <input type="checkbox" checked={s.config.pauseMediaOnCall} onChange={e => { s.config.pauseMediaOnCall = e.target.checked; refresh(); }} />
+                <span className="toggle-slider" />
+              </label>
+              Pausar carrossel ao chamar senha
+            </label>
+          </div>
+          <div className="admin-section">
+            <div className="admin-section-title">Slides do Carrossel</div>
+            {sorted.map((slide, i) => (
+              <div key={slide.id} className="slide-editor-row">
+                <div className="slide-preview" style={slide.url ? {backgroundImage:`url(${slide.url})`} : {background: slide.fallbackColor}} />
+                <label className="toggle">
+                  <input type="checkbox" checked={slide.active} onChange={e => updateSlide(slide.id, 'active', e.target.checked)} />
+                  <span className="toggle-slider" />
+                </label>
+                <input className="admin-input" style={{width:140}} value={slide.title} onChange={e => updateSlide(slide.id, 'title', e.target.value)} placeholder="Título" />
+                <input className="admin-input" style={{width:120}} value={slide.caption} onChange={e => updateSlide(slide.id, 'caption', e.target.value)} placeholder="Legenda" />
+                <input className="admin-input" style={{width:160}} value={slide.url} onChange={e => updateSlide(slide.id, 'url', e.target.value)} placeholder="URL da imagem" />
+                <input type="color" value={slide.fallbackColor} onChange={e => updateSlide(slide.id, 'fallbackColor', e.target.value)} style={{width:36,height:28,border:'none',background:'none',cursor:'pointer'}} title="Cor de fallback" />
+                <input className="admin-input" type="number" style={{width:70}} value={slide.duration} min={1} max={60} onChange={e => updateSlide(slide.id, 'duration', Number(e.target.value))} />
+                <span style={{fontFamily:'Rajdhani',fontSize:'0.8rem',color:'var(--text-muted)'}}>s</span>
+                <button className="btn btn-secondary" style={{padding:'0.25rem 0.5rem',fontSize:'0.8rem'}} onClick={() => moveSlide(slide.id, -1)} disabled={i===0}>▲</button>
+                <button className="btn btn-secondary" style={{padding:'0.25rem 0.5rem',fontSize:'0.8rem'}} onClick={() => moveSlide(slide.id, 1)} disabled={i===sorted.length-1}>▼</button>
+                <button className="btn btn-danger" style={{padding:'0.25rem 0.5rem',fontSize:'0.8rem'}} onClick={() => removeSlide(slide.id)}>✕</button>
+              </div>
+            ))}
+            <button className="btn btn-success" style={{marginTop:'0.75rem'}} onClick={addSlide}>+ Adicionar Slide</button>
+          </div>
+        </div>
+      );
+    }
+
+    // --- Stations Tab ---
+    function AdminStations() {
+      const s = window.APP_STATE;
+      const [, forceRender] = React.useState(0);
+      const refresh = () => { window.dispatchUpdate(); forceRender(n => n+1); };
+
+      const setTotal = (n) => {
+        const cur = s.stations.length;
+        if (n > cur) {
+          for (let i = cur + 1; i <= n; i++) s.stations.push({ id: i, label: `Guichê ${i}`, active: true });
+        } else if (n < cur) {
+          s.stations = s.stations.slice(0, n);
+        }
+        refresh();
+      };
+
+      return (
+        <div>
+          <div className="admin-section">
+            <div className="admin-section-title">Total de Guichês</div>
+            <div style={{display:'flex',alignItems:'center',gap:'1rem',marginBottom:'1rem'}}>
+              <input type="number" className="admin-input" style={{width:80}} min={1} max={20} value={s.stations.length} onChange={e => setTotal(Math.min(20, Math.max(1, Number(e.target.value))))} />
+              <span style={{fontFamily:'Rajdhani',color:'var(--text-muted)',fontSize:'0.9rem'}}>guichês (1–20)</span>
+            </div>
+            {s.stations.map(st => (
+              <div key={st.id} className="station-editor-row">
+                <label className="toggle">
+                  <input type="checkbox" checked={st.active} onChange={e => { st.active = e.target.checked; refresh(); }} />
+                  <span className="toggle-slider" />
+                </label>
+                <input className="admin-input" style={{width:160}} value={st.label} onChange={e => { st.label = e.target.value; refresh(); }} />
+                {s.currentCall?.stationId === st.id && <span className="status-badge status-ok">● Ativo agora</span>}
+              </div>
+            ))}
+          </div>
+        </div>
+      );
+    }
+
+    // --- Settings Tab ---
+    function AdminSettings() {
+      const s = window.APP_STATE;
+      const [form, setForm] = React.useState({ ...s.config, workingHoursStart: s.config.workingHours.start, workingHoursEnd: s.config.workingHours.end });
+
+      const save = () => {
+        s.config.unitName = form.unitName;
+        s.config.sectorName = form.sectorName;
+        s.config.welcomeMessage = form.welcomeMessage;
+        s.config.footerMessage = form.footerMessage;
+        s.config.workingHours = { start: form.workingHoursStart, end: form.workingHoursEnd };
+        window.dispatchUpdate();
+        alert('Configurações salvas!');
+      };
+
+      return (
+        <div>
+          <div className="admin-section">
+            <div className="admin-section-title">Configurações Gerais</div>
+            <div className="settings-form">
+              {[['unitName','Nome da Unidade'],['sectorName','Nome do Setor'],['welcomeMessage','Mensagem de Boas-vindas (Totem)'],['footerMessage','Mensagem de Rodapé (Painel)']].map(([k,l]) => (
+                <div key={k} className="settings-field">
+                  <label className="settings-label">{l}</label>
+                  <input className="settings-input" value={form[k]} onChange={e => setForm(f => ({...f, [k]: e.target.value}))} />
+                </div>
+              ))}
+              <div style={{display:'flex',gap:'1rem'}}>
+                <div className="settings-field" style={{flex:1}}>
+                  <label className="settings-label">Horário de Abertura</label>
+                  <input type="time" className="settings-input" value={form.workingHoursStart} onChange={e => setForm(f => ({...f, workingHoursStart: e.target.value}))} />
+                </div>
+                <div className="settings-field" style={{flex:1}}>
+                  <label className="settings-label">Horário de Fechamento</label>
+                  <input type="time" className="settings-input" value={form.workingHoursEnd} onChange={e => setForm(f => ({...f, workingHoursEnd: e.target.value}))} />
+                </div>
+              </div>
+              <button className="btn btn-primary" style={{alignSelf:'flex-start'}} onClick={save}>Salvar Configurações</button>
+            </div>
+          </div>
+          <div className="admin-section">
+            <div className="admin-section-title">Operações de Reset e Exportação</div>
+            <div className="reset-buttons">
+              <button className="btn btn-warning" style={{background:'var(--warning)',color:'#fff'}} onClick={() => { if(window.confirm('Confirma reset diário? Filas e contadores serão zerados.')) dailyReset(); }}>🔄 Reset Diário</button>
+              <button className="btn btn-danger" onClick={() => { if(window.confirm('ATENÇÃO: Reset completo irá apagar TUDO. Confirma?') && window.confirm('Tem certeza? Esta ação é irreversível.')) fullReset(); }}>⚠️ Reset Completo</button>
+              <button className="btn btn-secondary" onClick={exportHistory}>📥 Exportar Histórico JSON</button>
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    // =========================================================
+    // NavBar — barra de navegação fixa no topo
+    // =========================================================
+    const NAV_ITEMS = [
+      { id: 'totem',    label: 'Totem' },
+      { id: 'painel',   label: 'Painel' },
+      { id: 'operador', label: 'Operador' },
+      { id: 'admin',    label: 'Administrador' },
+    ];
+
+    function NavBar({ activeModule, setActiveModule }) {
+      return (
+        <nav className="navbar">
+          <span className="navbar-logo">BALCÃO</span>
+          <div className="navbar-nav">
+            {NAV_ITEMS.map(item => (
+              <button
+                key={item.id}
+                className={`navbar-btn${activeModule === item.id ? ' active' : ''}`}
+                onClick={() => setActiveModule(item.id)}
+              >
+                {item.label}
+              </button>
+            ))}
+          </div>
+        </nav>
+      );
+    }
+
+    // =========================================================
+    // Componente App — raiz da aplicação
+    // =========================================================
+
+    // Mapa de modo de estação para módulo fixo
+    const STATION_MODULE_MAP = {
+      totem:    'totem',
+      painel:   'painel',
+      operador: 'operador',
+      admin:    'admin',
+    };
+
+    function App() {
+      const [, setState] = React.useState(0);
+      const stationMode   = window.STATION_MODE;
+      const fixedModule   = stationMode ? (STATION_MODULE_MAP[stationMode] || 'totem') : null;
+      const [activeModule, setActiveModule] = React.useState(fixedModule || 'totem');
+
+      React.useEffect(() => {
+        // Registra dispatchUpdate — publica no Firebase ao atualizar
+        window.dispatchUpdate = () => {
+          setState(n => n + 1);
+          window.fbPush(window.APP_STATE);
+        };
+
+        // Escuta mudanças remotas do Firebase
+        window.fbListen(() => setState(n => n + 1));
+      }, []);
+
+      // Título da aba conforme modo
+      React.useEffect(() => {
+        const labels = { totem: 'Totem', painel: 'Painel', operador: 'Operador', admin: 'Administrador' };
+        document.title = stationMode
+          ? `BALCÃO — ${labels[stationMode] || stationMode}`
+          : 'BALCÃO — Sistema de Senhas';
+      }, []);
+
+      const renderModule = () => {
+        const mod = fixedModule || activeModule;
+        switch (mod) {
+          case 'totem':    return <TotemModule />;
+          case 'painel':   return <PainelModule />;
+          case 'operador': return <OperadorModule />;
+          case 'admin':    return <AdminModule />;
+          default:         return <TotemModule />;
+        }
+      };
+
+      // Modo estação: sem NavBar, tela cheia no módulo fixo
+      if (fixedModule) {
+        return (
+          <div className="module-container" style={{ paddingTop: 0 }}>
+            {renderModule()}
+          </div>
+        );
+      }
+
+      // Modo completo: com NavBar e todos os módulos
+      return (
+        <div>
+          <NavBar activeModule={activeModule} setActiveModule={setActiveModule} />
+          <div className="module-container">
+            {renderModule()}
+          </div>
+        </div>
+      );
+    }
+
+    // =========================================================
+    // Ponto de entrada — monta a aplicação
+    // =========================================================
+    const root = ReactDOM.createRoot(document.getElementById('root'));
+    root.render(<App />);
+  </script>
+</body>
+</html>
