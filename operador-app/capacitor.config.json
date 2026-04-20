@@ -1,0 +1,13 @@
+{
+  "appId": "com.ni.painelsenha.operador",
+  "appName": "Painel de senha do Ni - Operador",
+  "webDir": "www",
+  "server": {
+    "androidScheme": "https"
+  },
+  "android": {
+    "allowMixedContent": true,
+    "captureInput": true,
+    "webContentsDebuggingEnabled": true
+  }
+}

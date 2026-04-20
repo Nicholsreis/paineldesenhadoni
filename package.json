@@ -1,37 +1,67 @@
 {
-  "name": "balcao-senhas",
+  "name": "painel-senha-ni",
   "version": "1.0.0",
-  "description": "Sistema de Gerenciamento de Senhas — Setor BALCÃO",
+  "description": "Painel de senha do Ni — Sistema de Gerenciamento de Senhas",
   "main": "main.js",
   "scripts": {
     "start": "electron .",
     "build": "electron-builder --win --x64",
-    "build:dir": "electron-builder --win --x64 --dir"
+    "build:dir": "electron-builder --win --x64 --dir",
+    "build:totem": "electron-builder --win --x64 --config.nsis.include=build/installer-totem.nsh --config.productName=\"Painel de senha do Ni - Totem\" --config.artifactName=\"Painel de senha do Ni - Totem Setup.exe\"",
+    "build:painel": "electron-builder --win --x64 --config.nsis.include=build/installer-painel.nsh --config.productName=\"Painel de senha do Ni - Telao\" --config.artifactName=\"Painel de senha do Ni - Telao Setup.exe\"",
+    "build:admin": "electron-builder --win --x64 --config.nsis.include=build/installer-admin.nsh --config.productName=\"Painel de senha do Ni - Admin\" --config.artifactName=\"Painel de senha do Ni - Admin Setup.exe\"",
+    "build:dual": "electron-builder --win --x64 --config.nsis.include=build/installer-dual.nsh --config.productName=\"Painel de senha do Ni - Dual Monitor\" --config.artifactName=\"Painel de senha do Ni - Dual Monitor Setup.exe\"",
+    "build:all": "npm run build:totem && npm run build:painel && npm run build:admin && npm run build:dual",
+    "test": "vitest --run",
+    "test:watch": "vitest",
+    "test:coverage": "vitest --run --coverage"
   },
   "dependencies": {
+    "build": "^0.1.4",
+    "node-windows": "^1.0.0-beta.8",
+    "qrcode": "^1.5.4",
     "serialport": "^12.0.0"
   },
   "devDependencies": {
+    "@capacitor/android": "^8.3.1",
+    "@capacitor/cli": "^8.3.1",
+    "@capacitor/core": "^8.3.1",
+    "@testing-library/jest-dom": "^6.9.1",
+    "@testing-library/react": "^16.3.2",
+    "@testing-library/user-event": "^14.6.1",
+    "@vitejs/plugin-react": "^6.0.1",
+    "@vitest/coverage-v8": "^4.1.4",
     "electron": "^30.0.0",
-    "electron-builder": "^24.0.0"
+    "electron-builder": "^24.0.0",
+    "fast-check": "^4.7.0",
+    "jsdom": "^29.0.2",
+    "vitest": "^4.1.4"
   },
   "build": {
-    "appId": "com.balcao.senhas",
-    "productName": "BALCÃO Senhas",
+    "appId": "com.ni.painelsenha",
+    "productName": "Painel de senha do Ni",
+    "executableName": "Painel de senha do Ni",
+    "forceCodeSigning": false,
     "win": {
       "target": "nsis",
-      "icon": "assets/icon.ico"
+      "icon": "build/icon.ico",
+      "executableName": "Painel de senha do Ni",
+      "signAndEditExecutable": false
     },
     "nsis": {
       "oneClick": false,
       "allowToChangeInstallationDirectory": true,
-      "installerLanguages": ["pt_BR"]
+      "installerLanguages": [
+        "pt_BR"
+      ],
+      "installerIcon": "build/icon.ico",
+      "uninstallerIcon": "build/icon.ico"
     },
     "files": [
       "main.js",
       "preload.js",
       "index.html",
-      "assets/**"
+      "node_modules/qrcode/**"
     ]
   }
 }

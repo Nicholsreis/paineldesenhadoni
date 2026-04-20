@@ -1,0 +1,584 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>BALCÃO — Operador Premium</title>
+  <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;700&family=Rajdhani:wght@500;600;700&display=swap" rel="stylesheet">
+  <style>
+    /* ── LIGHT (padrão) ── */
+    :root {
+      --bg-start: #e8f0fe;
+      --bg-end:   #f8fafc;
+      --card:     rgba(255,255,255,0.85);
+      --text:     #0f172a;
+      --muted:    rgba(15,23,42,0.38);
+      --dimmed:   rgba(15,23,42,0.25);
+      --border:   rgba(15,23,42,0.09);
+      --waiting-bg: rgba(59,130,246,0.06);
+      --back-color: #475569;
+      --back-hover: rgba(15,23,42,0.04);
+      --toast-bg:   rgba(255,255,255,0.95);
+      --toast-color:#0f172a;
+      --glow:     rgba(59,130,246,0.05);
+      --ticket-shadow: 0 0 40px rgba(59,130,246,0.18);
+      --accent:   #3b82f6;
+      --success:  #22c55e;
+      --danger:   #ef4444;
+      --warning:  #f59e0b;
+    }
+
+    /* ── DARK ── */
+    [data-theme="dark"] {
+      --bg-start: #1e293b;
+      --bg-end:   #020617;
+      --card:     rgba(30,41,59,0.6);
+      --text:     #f8fafc;
+      --muted:    rgba(248,250,252,0.35);
+      --dimmed:   rgba(248,250,252,0.28);
+      --border:   rgba(255,255,255,0.08);
+      --waiting-bg: rgba(255,255,255,0.05);
+      --back-color: rgba(203,213,245,0.7);
+      --back-hover: rgba(255,255,255,0.04);
+      --toast-bg:   rgba(2,6,23,0.92);
+      --toast-color:#f8fafc;
+      --glow:     rgba(59,130,246,0.06);
+      --ticket-shadow: 0 0 40px rgba(59,130,246,0.35);
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+
+    body {
+      background: radial-gradient(circle at top, var(--bg-start) 0%, var(--bg-end) 70%);
+      color: var(--text);
+      font-family: 'Rajdhani', sans-serif;
+      display: flex;
+      justify-content: center;
+      height: 100vh;
+      height: 100dvh; /* dynamic viewport height — melhor em mobile */
+      overflow: hidden;
+      transition: background 0.3s ease, color 0.3s ease;
+    }
+
+    .app {
+      width: 100%;
+      max-width: 520px;
+      height: 100vh;
+      height: 100dvh;
+      display: flex;
+      flex-direction: column;
+      padding: 0.75rem;
+      padding-bottom: max(0.75rem, env(safe-area-inset-bottom));
+      gap: 0.6rem;
+      overflow: hidden;
+    }
+
+    /* HEADER */
+    .header {
+      padding: 0.6rem 1rem;
+      border-radius: 14px;
+      background: var(--card);
+      backdrop-filter: blur(10px);
+      border: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-shrink: 0;
+      transition: background 0.3s, border-color 0.3s;
+    }
+
+    .header-left { display: flex; flex-direction: column; gap: 0.2rem; min-width: 0; }
+    .unit-title { font-weight: 700; font-size: 0.9rem; letter-spacing: 1px; text-transform: uppercase; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+    .header-badge {
+      font-size: 0.65rem;
+      background: rgba(59,130,246,0.1);
+      color: var(--accent);
+      border: 1px solid rgba(59,130,246,0.2);
+      border-radius: 999px;
+      padding: 0.15rem 0.6rem;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      font-weight: 600;
+      width: fit-content;
+    }
+
+    .header-right { display: flex; align-items: center; gap: 0.6rem; }
+
+    .station-select {
+      background: var(--waiting-bg);
+      color: var(--text);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 0.3rem 0.6rem;
+      font-family: 'Rajdhani', sans-serif;
+      font-weight: 600;
+      font-size: 0.85rem;
+      outline: none;
+    }
+
+    /* TOGGLE TEMA */
+    .theme-toggle {
+      background: var(--waiting-bg);
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      width: 2.2rem;
+      height: 2.2rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      font-size: 1rem;
+      transition: background 0.2s, transform 0.1s;
+    }
+    .theme-toggle:active { transform: scale(0.9); }
+
+    /* TICKET DISPLAY */
+    .current-status {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      border-radius: 20px;
+      background: var(--card);
+      backdrop-filter: blur(12px);
+      border: 1px solid var(--border);
+      gap: 0.4rem;
+      position: relative;
+      overflow: hidden;
+      transition: background 0.3s, border-color 0.3s;
+    }
+
+    .current-status::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(circle at center, var(--glow) 0%, transparent 70%);
+      pointer-events: none;
+    }
+
+    .label-senha {
+      font-size: 0.75rem;
+      font-weight: 600;
+      letter-spacing: 3px;
+      text-transform: uppercase;
+      color: var(--muted);
+    }
+
+    .current-ticket {
+      font-family: 'Oswald', sans-serif;
+      font-size: clamp(4.5rem, 22vw, 9rem);
+      font-weight: 700;
+      color: var(--accent);
+      text-shadow: var(--ticket-shadow);
+      line-height: 1;
+      transition: opacity 0.15s ease, transform 0.15s ease;
+    }
+
+    .current-ticket.flash { opacity: 0; transform: scale(0.95); }
+
+    .service-info { font-size: 1rem; font-weight: 600; color: var(--muted); margin-top: -0.25rem; }
+
+    /* CARDS DE FILA POR SERVIÇO */
+    .queue-cards {
+      display: flex;
+      gap: 0.5rem;
+      flex-shrink: 0;
+    }
+
+    .queue-card {
+      flex: 1;
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 0.5rem 0.75rem;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0.1rem;
+      backdrop-filter: blur(8px);
+    }
+
+    .queue-card-count {
+      font-family: 'Oswald', sans-serif;
+      font-size: 2rem;
+      font-weight: 700;
+      line-height: 1;
+    }
+
+    .queue-card-label {
+      font-size: 0.7rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: var(--muted);
+      text-align: center;
+    }
+
+    .queue-card-sub {
+      font-size: 0.65rem;
+      color: var(--dimmed);
+    }
+
+    /* WAITING COUNT */
+    .waiting-block {
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+      margin-top: 0.5rem;
+      padding: 0.35rem 1rem;
+      border-radius: 999px;
+      background: var(--waiting-bg);
+      border: 1px solid var(--border);
+      transition: opacity 0.3s ease;
+    }
+    .waiting-block.hidden { opacity: 0; pointer-events: none; }
+
+    .waiting-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--accent);
+      animation: pulse-dot 1.8s ease-in-out infinite;
+    }
+    @keyframes pulse-dot { 0%, 100% { opacity: 1; transform: scale(1); } 50% { opacity: 0.4; transform: scale(0.7); } }
+
+    .waiting-text { font-size: 0.85rem; font-weight: 600; letter-spacing: 0.5px; color: var(--muted); }
+    .waiting-text strong { color: var(--accent); font-weight: 700; }
+
+    /* CONTROLES */
+    .controls {
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+      flex-shrink: 0; /* nunca encolhe — sempre visível */
+    }
+
+    .btn {
+      border: none;
+      border-radius: 14px;
+      padding: 0.9rem 1rem;
+      font-family: 'Rajdhani', sans-serif;
+      font-size: 1.1rem;
+      font-weight: 700;
+      letter-spacing: 0.5px;
+      cursor: pointer;
+      text-transform: uppercase;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.6rem;
+      transition: transform 0.1s, box-shadow 0.2s, opacity 0.2s;
+      flex-shrink: 0;
+    }
+    .btn:active { transform: scale(0.97); }
+    .btn:disabled { opacity: 0.3; cursor: not-allowed; transform: none; }
+
+    .btn-next   { background: linear-gradient(135deg, #22c55e, #16a34a); color: #fff; box-shadow: 0 4px 14px rgba(34,197,94,0.25); font-size: 1.25rem; padding: 1.1rem; }
+    .btn-repeat { background: linear-gradient(135deg, #3b82f6, #2563eb); color: #fff; box-shadow: 0 3px 10px rgba(59,130,246,0.2); }
+    .btn-back   { background: linear-gradient(135deg, #f59e0b, #d97706); color: #fff; box-shadow: 0 3px 10px rgba(245,158,11,0.2); font-size: 1rem; padding: 0.8rem; }
+    .btn-back:disabled { opacity: 0.35; }
+
+    /* TOAST LOG */
+    .action-log {
+      position: fixed;
+      top: 100px; left: 50%;
+      transform: translateX(-50%) translateY(-20px);
+      background: var(--toast-bg);
+      color: var(--toast-color);
+      border: 1px solid var(--border);
+      padding: 0.6rem 1.5rem;
+      border-radius: 999px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      opacity: 0;
+      transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+      backdrop-filter: blur(10px);
+      z-index: 1000;
+      pointer-events: none;
+    }
+    .action-log.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+  </style>
+</head>
+<body>
+
+  <div class="app">
+    <div id="actionLog" class="action-log"></div>
+
+    <div class="header">
+      <div class="header-left">
+        <div id="unitTitle" class="unit-title">Carregando...</div>
+        <span class="header-badge" id="globalCallBadge">Geral: ---</span>
+      </div>
+      <div class="header-right">
+        <select id="stationSelect" class="station-select"></select>
+        <button class="theme-toggle" id="themeToggle" title="Alternar tema">☾</button>
+      </div>
+    </div>
+
+    <div class="current-status">
+      <span class="label-senha">Minha Senha Atual</span>
+      <div id="currentTicket" class="current-ticket">---</div>
+      <div id="serviceInfo" class="service-info">Aguardando...</div>
+    </div>
+
+    <!-- Card fixo de fila por tipo de serviço -->
+    <div id="queueCards" class="queue-cards"></div>
+
+    <div class="controls">
+      <button id="btnRepeat" class="btn btn-repeat" disabled><span>🔁</span> Repetir</button>
+      <button id="btnNext"   class="btn btn-next"><span>🔔</span> Chamar Próximo</button>
+      <button id="btnBack"   class="btn btn-back"   disabled><span>↩</span> Devolver à Fila</button>
+    </div>
+  </div>
+
+  <script>
+    // --- Configuração de Rede ---
+    const URL_PARAMS = new URLSearchParams(window.location.search);
+    const SERVER_IP = URL_PARAMS.get('server') || window.location.hostname || 'localhost';
+    const API_URL   = `http://${SERVER_IP}:3080/api/state`;
+
+    let state = null;
+    let myStationId = parseInt(localStorage.getItem('myStationId')) || 1;
+
+    // --- Elementos ---
+    const unitTitleEl    = document.getElementById('unitTitle');
+    const globalBadgeEl  = document.getElementById('globalCallBadge');
+    const stationSelect  = document.getElementById('stationSelect');
+    const themeToggle    = document.getElementById('themeToggle');
+    const ticketEl       = document.getElementById('currentTicket');
+    const serviceInfoEl  = document.getElementById('serviceInfo');
+    const btnNext        = document.getElementById('btnNext');
+    const btnRepeat      = document.getElementById('btnRepeat');
+    const btnBack        = document.getElementById('btnBack');
+    const actionLog      = document.getElementById('actionLog');
+
+    // --- Tema ---
+    (function initTheme() {
+      const saved = localStorage.getItem('balcao-theme') || 'light';
+      if (saved === 'dark') {
+        document.documentElement.setAttribute('data-theme', 'dark');
+        themeToggle.textContent = '☀';
+      }
+    })();
+
+    themeToggle.onclick = () => {
+      const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+      if (isDark) {
+        document.documentElement.removeAttribute('data-theme');
+        themeToggle.textContent = '☾';
+        localStorage.setItem('balcao-theme', 'light');
+      } else {
+        document.documentElement.setAttribute('data-theme', 'dark');
+        themeToggle.textContent = '☀';
+        localStorage.setItem('balcao-theme', 'dark');
+      }
+    };
+
+    // --- Sincronização via SSE (tempo real) ---
+    async function init() {
+      // Carrega estado inicial via fetch
+      try {
+        const res = await fetch(API_URL);
+        if (res.ok) { state = await res.json(); updateUI(); }
+      } catch (e) { console.warn('[Init] Servidor não disponível'); }
+
+      renderStations();
+      connectSSE();
+    }
+
+    function connectSSE() {
+      const SSE_URL = `http://${SERVER_IP}:3080/api/events`;
+      try {
+        const es = new EventSource(SSE_URL);
+
+        es.onmessage = (e) => {
+          try {
+            const newData = JSON.parse(e.data);
+            if (JSON.stringify(state) !== JSON.stringify(newData)) {
+              state = newData;
+              updateUI();
+            }
+          } catch (err) { /* ignora */ }
+        };
+
+        es.onerror = () => {
+          console.warn('[SSE] Reconectando...');
+          es.close();
+          setTimeout(connectSSE, 2000);
+        };
+
+        console.log('[SSE] Conectado');
+      } catch (e) {
+        // Fallback polling se SSE não disponível
+        console.warn('[SSE] Fallback para polling');
+        setInterval(poll, 1500);
+      }
+    }
+
+    async function poll() {
+      try {
+        const res = await fetch(API_URL);
+        if (res.ok) {
+          const newData = await res.json();
+          if (JSON.stringify(state) !== JSON.stringify(newData)) {
+            state = newData;
+            updateUI();
+          }
+        }
+      } catch (e) {
+        console.warn('Conexão perdida...');
+      }
+    }
+
+    function renderStations() {
+      if (!state) return;
+      stationSelect.innerHTML = state.stations.map(st => 
+        `<option value="${st.id}" ${st.id === myStationId ? 'selected' : ''}>${st.label}</option>`
+      ).join('');
+    }
+
+    stationSelect.onchange = (e) => {
+      myStationId = parseInt(e.target.value);
+      localStorage.setItem('myStationId', myStationId);
+      updateUI();
+    };
+
+    function showLog(msg, color = 'var(--success)') {
+      actionLog.textContent = msg;
+      actionLog.style.color = color;
+      actionLog.classList.remove('show');
+      void actionLog.offsetWidth;
+      actionLog.classList.add('show');
+      setTimeout(() => actionLog.classList.remove('show'), 2000);
+    }
+
+    function flashTicket(newValue) {
+      if (ticketEl.textContent === newValue) return;
+      ticketEl.classList.add('flash');
+      setTimeout(() => {
+        ticketEl.textContent = newValue;
+        ticketEl.classList.remove('flash');
+      }, 150);
+    }
+
+    function updateUI() {
+      if (!state) return;
+
+      // Nome da Unidade
+      unitTitleEl.innerText = state.config.unitName;
+
+      // Visor Geral (TV)
+      globalBadgeEl.innerText = `Geral: ${state.currentCall?.ticket || '---'}`;
+
+      // Minha Chamada
+      const myCall = state.currentCall && state.currentCall.stationId === myStationId ? state.currentCall : null;
+      flashTicket(myCall ? myCall.ticket : '---');
+      
+      const svc = myCall ? state.services.find(s => s.id === myCall.serviceId) : null;
+      serviceInfoEl.innerText = svc ? svc.label : 'Aguardando próxima';
+      ticketEl.style.color = svc ? svc.color : 'var(--accent)';
+
+      // Cards de fila por serviço
+      const queueCards = document.getElementById('queueCards');
+      const activeServices = (state.services || []).filter(sv => sv.active);
+      const totalQueue = state.queue.length;
+
+      queueCards.innerHTML = activeServices.map(sv => {
+        const count = state.queue.filter(q => q.serviceId === sv.id).length;
+        return `
+          <div class="queue-card" style="border-top: 3px solid ${sv.color}">
+            <div class="queue-card-count" style="color:${sv.color}">${count}</div>
+            <div class="queue-card-label">${sv.label}</div>
+            <div class="queue-card-sub">na fila</div>
+          </div>
+        `;
+      }).join('') + `
+        <div class="queue-card" style="border-top: 3px solid var(--muted)">
+          <div class="queue-card-count" style="color:var(--text)">${totalQueue}</div>
+          <div class="queue-card-label">Total</div>
+          <div class="queue-card-sub">aguardando</div>
+        </div>
+      `;
+
+      // Botões
+      btnNext.disabled   = totalQueue === 0;
+      btnRepeat.disabled = !myCall;
+      btnBack.disabled   = !state.called.some(c => c.stationId === myStationId);
+    }
+
+    async function pushState() {
+      try {
+        await fetch(API_URL, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(state)
+        });
+      } catch (e) {
+        showLog('Erro ao salvar!', 'var(--danger)');
+      }
+    }
+
+    // --- Ações ---
+
+    btnNext.onclick = async () => {
+      const activeServiceIds = state.services
+        .filter(sv => sv.active)
+        .sort((a, b) => b.priority - a.priority)
+        .map(sv => sv.id);
+
+      let candidate = null;
+      for (const sid of activeServiceIds) {
+        candidate = state.queue.find(q => q.serviceId === sid);
+        if (candidate) break;
+      }
+      if (!candidate) return;
+
+      state.queue = state.queue.filter(q => q.id !== candidate.id);
+      state.currentCall = {
+        ticket: candidate.ticket,
+        serviceId: candidate.serviceId,
+        stationId: myStationId,
+        time: Date.now(),
+        _t: Date.now()
+      };
+      state.called.push(state.currentCall);
+
+      showLog(`Senha ${candidate.ticket} chamada`);
+      updateUI();
+      await pushState();
+    };
+
+    btnRepeat.onclick = async () => {
+      if (!state.currentCall) return;
+      state.currentCall._t = Date.now();
+      showLog(`Repetindo ${state.currentCall.ticket}`, 'var(--accent)');
+      await pushState();
+    };
+
+    btnBack.onclick = async () => {
+      const myCalls = state.called.filter(c => c.stationId === myStationId);
+      if (myCalls.length === 0) return;
+
+      const lastCall = myCalls[myCalls.length - 1];
+      state.called = state.called.filter(c => c !== lastCall);
+      state.queue.unshift({
+        id: Math.random().toString(36).substr(2, 9),
+        ticket: lastCall.ticket,
+        serviceId: lastCall.serviceId,
+        time: 0
+      });
+
+      const newMyCalls = state.called.filter(c => c.stationId === myStationId);
+      state.currentCall = newMyCalls.length > 0 ? { ...newMyCalls[newMyCalls.length - 1], _t: Date.now() } : null;
+
+      showLog(`Senha ${lastCall.ticket} voltou para fila`, 'var(--warning)');
+      updateUI();
+      await pushState();
+    };
+
+    init();
+  </script>
+</body>
+</html>

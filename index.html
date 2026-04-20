@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Sistema BALCÃO — Gerenciamento de Senhas</title>
+  <title>Painel de senha do Ni — Sistema de Gerenciamento de Senhas</title>
 
   <style>
     /* =========================================================
@@ -258,7 +258,7 @@
       padding: 2rem 3rem;
     }
 
-    /* Paper-out card */
+    /* Paper-out card (aviso leve — papel acabando) */
     .paper-out-overlay {
       position: fixed;
       inset: 0;
@@ -316,6 +316,83 @@
     }
 
     .paper-out-dismiss:hover { filter: brightness(1.1); }
+
+    /* =========================================================
+       ErrorCard — card fullscreen de erro crítico (totem bloqueado)
+       ========================================================= */
+    @keyframes error-pulse {
+      0%, 100% { opacity: 1; }
+      50%       { opacity: 0.6; }
+    }
+
+    .error-card-overlay {
+      position: fixed;
+      inset: 0;
+      background: #dc2626;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      z-index: 4000;
+      animation: fadeIn 0.4s ease;
+      text-align: center;
+      padding: 2rem;
+    }
+
+    .error-card-icon {
+      font-size: 8rem;
+      line-height: 1;
+      margin-bottom: 2rem;
+      animation: error-pulse 2s ease-in-out infinite;
+    }
+
+    .error-card-title {
+      font-family: 'Oswald', sans-serif;
+      font-size: clamp(2.5rem, 6vw, 5rem);
+      font-weight: 700;
+      color: #fff;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      margin-bottom: 1rem;
+      line-height: 1.1;
+    }
+
+    .error-card-subtitle {
+      font-family: 'Rajdhani', sans-serif;
+      font-size: clamp(1.4rem, 3vw, 2.2rem);
+      font-weight: 600;
+      color: rgba(255,255,255,0.85);
+      margin-bottom: 3rem;
+      line-height: 1.4;
+    }
+
+    .error-card-detail {
+      font-family: 'Rajdhani', sans-serif;
+      font-size: 1rem;
+      color: rgba(255,255,255,0.5);
+      background: rgba(0,0,0,0.2);
+      border-radius: var(--radius);
+      padding: 0.5rem 1.5rem;
+      margin-bottom: 2rem;
+    }
+
+    .error-card-dismiss {
+      background: rgba(255,255,255,0.15);
+      border: 2px solid rgba(255,255,255,0.4);
+      color: #fff;
+      font-family: 'Rajdhani', sans-serif;
+      font-size: 1rem;
+      font-weight: 700;
+      padding: 0.75rem 2.5rem;
+      border-radius: var(--radius);
+      cursor: pointer;
+      letter-spacing: 0.05em;
+      transition: background 0.2s;
+    }
+
+    .error-card-dismiss:hover {
+      background: rgba(255,255,255,0.25);
+    }
 
     /* Modal */
     .modal-overlay {
@@ -458,6 +535,21 @@
       justify-content: center;
       padding: 2rem;
       min-width: 60%;
+      min-height: 0;
+      position: relative;
+    }
+
+    /* Quando exibe mídia, remove padding para preencher tudo */
+    .painel-main.painel-main--media {
+      padding: 0;
+      align-items: stretch;
+      justify-content: stretch;
+      overflow: hidden;
+    }
+
+    .painel-main.painel-main--media .media-carousel {
+      height: 100%;
+      width: 100%;
     }
 
     .painel-sidebar {
@@ -471,7 +563,19 @@
 
     .current-call-area {
       text-align: center;
-      padding: 1rem;
+      padding: 1.25rem 1rem;
+      border-top: 1px solid var(--border);
+      flex-shrink: 0;
+      margin-top: auto;
+      transition: transform 0.5s ease-in-out, opacity 0.5s ease-in-out;
+      opacity: 1;
+      transform: scale(1);
+    }
+
+    /* Efeito de transição fade out com 500ms */
+    .current-call-area.fade-exit {
+      transform: scale(0.9);
+      opacity: 0;
     }
 
     .current-call-label {
@@ -552,8 +656,6 @@
       color: var(--text-muted);
       margin-top: 0.2rem;
     }
-
-    /* Recent calls */
     .recent-calls {
       flex: 1;
       padding: 1rem;
@@ -579,6 +681,36 @@
       margin-bottom: 0.4rem;
       background: var(--bg-elevated);
       font-family: 'Rajdhani', sans-serif;
+      transition: all 0.3s ease;
+    }
+
+    .recent-call-item.highlight {
+      animation: recent-highlight 2s ease;
+    }
+
+    @keyframes recent-highlight {
+      0%, 100% { 
+        background: var(--bg-elevated);
+        transform: scale(1);
+      }
+      15% { 
+        background: var(--accent);
+        transform: scale(1.05);
+      }
+      30% {
+        background: var(--accent);
+        transform: scale(1.05);
+      }
+    }
+
+    .recent-call-item.highlight .recent-call-ticket,
+    .recent-call-item.highlight .recent-call-meta {
+      animation: text-flash 2s ease;
+    }
+
+    @keyframes text-flash {
+      0%, 100% { color: inherit; }
+      15%, 30% { color: #fff; }
     }
 
     .recent-call-ticket {
@@ -660,6 +792,152 @@
 
     .media-dot.active {
       background: #fff;
+    }
+
+    /* Mídia indoor na área principal do painel (sem chamada ativa) */
+    .painel-media-fullarea {
+      flex: 1;
+      position: relative;
+      overflow: hidden;
+      min-height: 0;
+    }
+
+    .painel-media-fullarea .media-carousel {
+      height: 100%;
+    }
+
+    .painel-media-fullarea .media-slide-title {
+      font-size: 2.2rem;
+    }
+
+    .painel-media-fullarea .media-slide-caption {
+      font-size: 1.3rem;
+    }
+
+    .painel-media-fullarea .media-dot {
+      width: 10px;
+      height: 10px;
+    }
+
+    .painel-media-fullarea .media-dots {
+      bottom: 16px;
+    }
+
+    /* Animação zoom ao chamar senha */
+    @keyframes zoom-in-call {
+      0%   { transform: scale(0.4); opacity: 0; }
+      60%  { transform: scale(1.08); }
+      100% { transform: scale(1);   opacity: 1; }
+    }
+
+    .current-call-number.zoom-in {
+      animation: zoom-in-call 0.55s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+    }
+
+    /* =========================================================
+       Overlay fullscreen de chamada — estilo vibrante
+       ========================================================= */
+    @keyframes co-fade-in {
+      from { opacity: 0; }
+      to   { opacity: 1; }
+    }
+
+    @keyframes co-super-zoom {
+      0%   { transform: scale(0.95); filter: drop-shadow(0 0 10px var(--co-color-glow, rgba(0,123,255,0.2))); }
+      50%  { transform: scale(1.05); filter: drop-shadow(0 0 50px var(--co-color-glow, rgba(0,123,255,0.6))); }
+      100% { transform: scale(0.95); filter: drop-shadow(0 0 10px var(--co-color-glow, rgba(0,123,255,0.2))); }
+    }
+
+    @keyframes co-label-in {
+      0%   { letter-spacing: 0.6em; opacity: 0; }
+      100% { letter-spacing: 0.5vw; opacity: 1; }
+    }
+
+    @keyframes co-badge-in {
+      0%   { transform: translateY(20px); opacity: 0; }
+      100% { transform: translateY(0);    opacity: 1; }
+    }
+
+    .call-overlay {
+      position: fixed;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      z-index: 9999;
+      text-align: center;
+      overflow: hidden;
+      font-family: 'Arial Black', 'Barlow Condensed', sans-serif;
+      /* Desfoco do conteúdo atrás */
+      backdrop-filter: blur(18px) saturate(1.4);
+      -webkit-backdrop-filter: blur(18px) saturate(1.4);
+      background: rgba(244, 249, 255, 0.93);
+      animation: co-fade-in 0.2s ease forwards;
+      transition: transform 0.5s ease-in-out, opacity 0.5s ease-in-out;
+    }
+
+    .call-overlay.fade-exit {
+      transform: scale(0.9);
+      opacity: 0;
+    }
+
+    .call-overlay-label {
+      color: var(--co-color, #004a99);
+      font-size: 3vw;
+      text-transform: uppercase;
+      letter-spacing: 0.5vw;
+      margin-bottom: -2vw;
+      font-family: 'Rajdhani', sans-serif;
+      font-weight: 600;
+      animation: co-label-in 0.4s ease 0.05s both;
+      position: relative;
+      z-index: 1;
+    }
+
+    .call-overlay-number {
+      font-size: 45vw;
+      font-weight: 900;
+      color: var(--co-color, #007bff);
+      display: inline-block;
+      line-height: 1;
+      text-shadow: 0 0 40px var(--co-color-glow, rgba(0,123,255,0.4));
+      animation: co-super-zoom 1.2s ease-in-out infinite;
+      will-change: transform;
+      position: relative;
+      z-index: 1;
+    }
+
+    .call-overlay-station {
+      background-color: var(--co-color, #007bff);
+      color: #fff;
+      font-size: 5vw;
+      font-weight: 900;
+      padding: 1vw 8vw;
+      border-radius: 100px;
+      display: inline-block;
+      margin-top: -2vw;
+      box-shadow: 0 15px 35px var(--co-color-glow, rgba(0,123,255,0.4));
+      font-family: 'Oswald', 'Arial Black', sans-serif;
+      animation: co-badge-in 0.4s ease 0.25s both;
+      position: relative;
+      z-index: 1;
+    }
+
+    .call-overlay-queue {
+      position: absolute;
+      bottom: 3vw;
+      left: 50%;
+      transform: translateX(-50%);
+      font-family: 'Rajdhani', sans-serif;
+      font-size: 1.8vw;
+      font-weight: 600;
+      color: rgba(0, 0, 0, 0.5);
+      background: rgba(255, 255, 255, 0.7);
+      padding: 0.5vw 2vw;
+      border-radius: 50px;
+      backdrop-filter: blur(10px);
+      z-index: 1;
     }
 
     /* Footer */
@@ -885,6 +1163,31 @@
     .status-ok { background: rgba(5,150,105,0.15); color: var(--success); border: 1px solid var(--success); }
     .status-partial { background: rgba(217,119,6,0.15); color: var(--warning); border: 1px solid var(--warning); }
     .status-off { background: rgba(220,38,38,0.15); color: var(--danger); border: 1px solid var(--danger); }
+    /* Animations */
+    @keyframes pulse-danger {
+      0% { box-shadow: 0 0 0 0 rgba(220, 38, 38, 0.4); }
+      70% { box-shadow: 0 0 0 15px rgba(220, 38, 38, 0); }
+      100% { box-shadow: 0 0 0 0 rgba(220, 38, 38, 0); }
+    }
+
+    /* Logo & Slogan Styles */
+    .totem-header { display: flex; flex-direction: column; align-items: center; gap: 1rem; margin-bottom: 2rem; }
+    .totem-logo { max-width: 180px; max-height: 120px; object-fit: contain; }
+    .totem-slogan { font-family: 'Rajdhani', sans-serif; font-size: 1.25rem; color: var(--text-secondary); margin-top: -1rem; margin-bottom: 2.5rem; font-weight: 500; text-transform: uppercase; letter-spacing: 0.1em; opacity: 0.8; }
+
+    .painel-header-brand { display: flex; align-items: center; gap: 1.5rem; }
+    .painel-logo { max-width: 120px; max-height: 80px; object-fit: contain; }
+    .painel-header-text { display: flex; flex-direction: column; }
+    .painel-header-unit { font-family: 'Rajdhani', sans-serif; font-size: 1rem; color: var(--text-muted); font-weight: 500; }
+    .painel-slogan { margin-left: auto; font-family: 'Rajdhani', sans-serif; font-size: 1.1rem; color: var(--accent); font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; border-left: 2px solid var(--border); padding-left: 1.5rem; }
+
+    /* Fix para o layout do operador com o aviso de papel */
+    .operador { display: flex; flex-direction: column; gap: 1.5rem; padding: 2rem; max-width: 1200px; margin: 0 auto; min-height: 100vh; }
+
+    /* Digital Ticket Styles */
+    .totem-digital-info { margin-top: 2rem; padding: 1rem; border: 1px dashed var(--border); border-radius: var(--radius); display: flex; flex-direction: column; align-items: center; gap: 0.5rem; opacity: 0.8; }
+    .totem-digital-info span { font-family: 'Rajdhani', sans-serif; font-size: 0.9rem; color: var(--text-secondary); }
+    .totem-qr-placeholder { width: 80px; height: 80px; background: #fff; border: 4px solid var(--border); display: flex; align-items: center; justifyContent: center; color: #000; font-weight: bold; }
   </style>
 
   <!-- Google Fonts -->
@@ -899,68 +1202,87 @@
   <!-- Babel Standalone -->
   <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
 
-  <!-- Firebase SDK -->
-  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js"></script>
+  <!-- QR Code gerado localmente via main process -->
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
 </head>
 <body>
   <div id="root"></div>
 
   <!-- Firebase config + sync (configure sua chave aqui) -->
   <script>
-    // =========================================================
-    // FIREBASE CONFIG — substitua pelos dados do seu projeto
-    // Crie em: https://console.firebase.google.com
-    // =========================================================
-    const FIREBASE_CONFIG = {
-      apiKey:            "COLE_SUA_API_KEY_AQUI",
-      authDomain:        "SEU_PROJETO.firebaseapp.com",
-      databaseURL:       "https://SEU_PROJETO-default-rtdb.firebaseio.com",
-      projectId:         "SEU_PROJETO",
-      storageBucket:     "SEU_PROJETO.appspot.com",
-      messagingSenderId: "SEU_SENDER_ID",
-      appId:             "SEU_APP_ID"
+    // --- SINCRONIZAÇÃO LOCAL (Substitui Firebase) ---
+    const URL_PARAMS = new URLSearchParams(window.location.search);
+    window.STATION_MODE = URL_PARAMS.get('mode') || null;
+
+    // Se o parâmetro ?server=IP_DO_SERVIDOR estiver presente, usa esse IP.
+    // Caso contrário, usa o IP de onde a página foi carregada.
+    window.SERVER_IP = URL_PARAMS.get('server') || window.location.hostname || 'localhost';
+    window.API_URL   = `http://${window.SERVER_IP}:3080/api/state`;
+
+    console.log('[Sync] Servidor base:', window.API_URL);
+
+    // Publica estado no Servidor Local
+    window.localPush = function(state) {
+      fetch(window.API_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(state)
+      }).catch(e => console.error('[Sync] Erro ao salvar:', e));
     };
 
-    // Detecta modo pela URL: ?mode=totem | painel | operador | admin
-    const URL_PARAMS  = new URLSearchParams(window.location.search);
-    window.STATION_MODE = URL_PARAMS.get('mode') || null; // null = exibe todos os módulos
+    // Escuta mudanças via SSE (Server-Sent Events) — tempo real
+    // Fallback para polling se SSE não estiver disponível
+    window.localListen = function(onUpdate) {
+      const SSE_URL = `http://${window.SERVER_IP}:3080/api/events`;
 
-    // Inicializa Firebase se a config estiver preenchida
-    window.FB_READY = false;
-    window.FB_DB    = null;
+      function connectSSE() {
+        try {
+          const es = new EventSource(SSE_URL);
 
-    try {
-      if (FIREBASE_CONFIG.apiKey && FIREBASE_CONFIG.apiKey !== 'COLE_SUA_API_KEY_AQUI') {
-        firebase.initializeApp(FIREBASE_CONFIG);
-        window.FB_DB    = firebase.database();
-        window.FB_READY = true;
-        console.log('[Firebase] Conectado com sucesso.');
-      } else {
-        console.warn('[Firebase] Config não preenchida — rodando em modo local (sem sincronização).');
-      }
-    } catch(e) {
-      console.error('[Firebase] Erro ao inicializar:', e);
-    }
+          es.onmessage = (e) => {
+            try {
+              const data = JSON.parse(e.data);
+              const oldStr = JSON.stringify(window.APP_STATE);
+              const newStr = JSON.stringify(data);
+              if (oldStr !== newStr) {
+                Object.assign(window.APP_STATE, data);
+                onUpdate();
+              }
+            } catch (err) { /* ignora parse errors */ }
+          };
 
-    // Publica estado no Firebase
-    window.fbPush = function(state) {
-      if (!window.FB_READY) return;
-      window.FB_DB.ref('balcao/state').set(state).catch(e => console.error('[Firebase] Erro ao salvar:', e));
-    };
+          es.onerror = () => {
+            console.warn('[SSE] Conexão perdida, reconectando em 2s...');
+            es.close();
+            setTimeout(connectSSE, 2000);
+          };
 
-    // Escuta mudanças do Firebase e atualiza estado local
-    window.fbListen = function(onUpdate) {
-      if (!window.FB_READY) return;
-      window.FB_DB.ref('balcao/state').on('value', snap => {
-        const data = snap.val();
-        if (data) {
-          // Mescla sem sobrescrever referência (mantém reatividade)
-          Object.assign(window.APP_STATE, data);
-          onUpdate();
+          console.log('[SSE] Conectado a', SSE_URL);
+        } catch (e) {
+          // Fallback para polling se EventSource não disponível
+          console.warn('[SSE] Não disponível, usando polling');
+          const poll = async () => {
+            try {
+              const res = await fetch(window.API_URL);
+              if (res.ok) {
+                const data = await res.json();
+                const oldStr = JSON.stringify(window.APP_STATE);
+                const newStr = JSON.stringify(data);
+                if (oldStr !== newStr) { Object.assign(window.APP_STATE, data); onUpdate(); }
+              }
+            } catch (e) { /* silencioso */ }
+          };
+          setInterval(poll, 1500);
+          poll();
         }
-      });
+      }
+
+      connectSSE();
     };
+
+    // Aliases para compatibilidade
+    window.fbPush = window.localPush;
+    window.fbListen = window.localListen;
   </script>
 
   <script type="text/babel">
@@ -970,11 +1292,20 @@
     const FACTORY_STATE = {
       config: {
         unitName: 'Minha Empresa',
-        sectorName: 'BALCÃO',
+        sectorName: 'Painel de senha do Ni',
+        companySlogan: '',
+        logoUrl: '',               // URL ou path do logo
         welcomeMessage: 'Seja bem-vindo! Retire sua senha e aguarde ser chamado.',
-        footerMessage: 'BALCÃO — Atendimento de Segunda a Sexta, 8h às 18h',
+        footerMessage: 'Painel de senha do Ni — Atendimento de Segunda a Sexta, 8h às 18h',
         workingHours: { start: '08:00', end: '18:00' },
         pauseMediaOnCall: true,
+        overlayDuration: 5,        // Duração do overlay em segundos
+        enableCallSound: true,      // Habilitar som de chamada
+        callSoundMode: 'both',      // 'bell' | 'voice' | 'both' | 'none'
+        soundVolume: 0.8,          // Volume do som (0.0 a 1.0)
+        staffUnlockCode: '1234',   // Código para desbloquear totem após erro
+        enableDigitalTicket: false, // QR Code opcional
+        printerPort: '',            // Porta da impressora (ex: TMUSB001). Vazio = automático
       },
       services: [
         { id: 'general',  label: 'Geral',        color: '#2563eb', active: true, counter: 0, priority: 1 },
@@ -988,7 +1319,7 @@
       called: [],
       currentCall: null,
       mediaItems: [
-        { id: '1', title: 'Bem-vindo ao BALCÃO',        caption: '',                          url: '', fallbackColor: '#1e3a8a', duration: 6, active: true, order: 1 },
+        { id: '1', title: 'Bem-vindo ao Painel de senha do Ni',        caption: '',                          url: '', fallbackColor: '#1e3a8a', duration: 6, active: true, order: 1 },
         { id: '2', title: 'Horário: 8h às 18h',         caption: 'Seg a Sex',                 url: '', fallbackColor: '#064e3b', duration: 6, active: true, order: 2 },
         { id: '3', title: 'Atendimento Preferencial',   caption: 'Idoso · PCD · Gestante',    url: '', fallbackColor: '#4c1d95', duration: 6, active: true, order: 3 },
       ],
@@ -1069,7 +1400,42 @@
       };
 
       s.called.push(call);
-      s.currentCall = { ticket: candidate.ticket, serviceId: candidate.serviceId, stationId };
+      s.currentCall = { ...call, _t: Date.now() }; // Inclui timestamp para forçar sincronia
+
+      window.dispatchUpdate();
+    }
+
+    // =========================================================
+    // retroceder — Volta para a senha anterior do guichê
+    // =========================================================
+    function retroceder(stationId) {
+      const s = window.APP_STATE;
+      
+      // 1. Encontra a última chamada deste guichê
+      const lastCalls = s.called.filter(c => c.stationId === stationId);
+      if (lastCalls.length === 0) return;
+
+      const lastCall = lastCalls[lastCalls.length - 1];
+
+      // 2. Remove do histórico de chamadas
+      s.called = s.called.filter(c => c !== lastCall);
+
+      // 3. Devolve para o início da fila (fila é priorizada por time, então colocamos um time bem antigo)
+      s.queue.unshift({
+        id: crypto.randomUUID(),
+        ticket: lastCall.ticket,
+        serviceId: lastCall.serviceId,
+        time: 0 // Força a senha a ser a primeira da fila novamente
+      });
+
+      // 4. Define a chamada atual como a penúltima chamada (se houver) ou limpa
+      const prevCalls = s.called.filter(c => c.stationId === stationId);
+      if (prevCalls.length > 0) {
+        const prev = prevCalls[prevCalls.length - 1];
+        s.currentCall = { ...prev, _t: Date.now() };
+      } else {
+        s.currentCall = null;
+      }
 
       window.dispatchUpdate();
     }
@@ -1079,6 +1445,8 @@
     // =========================================================
     function repeatCall() {
       if (!window.APP_STATE.currentCall) return;
+      // Atualiza apenas o timestamp para forçar o useEffect do Painel a disparar o som
+      window.APP_STATE.currentCall._t = Date.now();
       window.dispatchUpdate();
     }
 
@@ -1096,9 +1464,106 @@
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = `historico-balcao-${new Date().toISOString().slice(0,10)}.json`;
+      a.download = `historico-painel-ni-${new Date().toISOString().slice(0,10)}.json`;
       a.click();
       URL.revokeObjectURL(url);
+    }
+
+    // =========================================================
+    // exportBackup / importBackup — Backup completo do sistema
+    // =========================================================
+    function exportBackup() {
+      const s = window.APP_STATE;
+
+      // Cópia profunda para evitar referências mutáveis
+      const snap = JSON.parse(JSON.stringify(s));
+
+      const backup = {
+        version: '1.0',
+        exportDate: new Date().toISOString(),
+
+        // Resumo legível do que está ativo (facilita leitura manual do JSON)
+        resumo: {
+          slidesAtivos:  snap.mediaItems.filter(m => m.active).map(m => m.title),
+          tiposSenhaAtivos: snap.services.filter(sv => sv.active).map(sv => sv.label),
+          guichesAtivos: snap.stations.filter(st => st.active).map(st => st.label),
+        },
+
+        // Dados completos para restauração
+        config:     snap.config,
+        services:   snap.services,   // inclui campo active de cada tipo de senha
+        stations:   snap.stations,   // inclui campo active de cada guichê
+        mediaItems: snap.mediaItems, // inclui campo active de cada slide
+        called:     snap.called,
+        queue:      snap.queue,
+        currentCall: snap.currentCall,
+      };
+
+      const blob = new Blob([JSON.stringify(backup, null, 2)], { type: 'application/json' });
+      const url  = URL.createObjectURL(blob);
+      const a    = document.createElement('a');
+      a.href     = url;
+      a.download = `backup-painel-ni-${new Date().toISOString().slice(0,10)}.json`;
+      a.click();
+      URL.revokeObjectURL(url);
+    }
+
+    function importBackup() {
+      const input = document.createElement('input');
+      input.type = 'file';
+      input.accept = '.json';
+      input.onchange = e => {
+        const file = e.target.files[0];
+        if (!file) return;
+        
+        const reader = new FileReader();
+        reader.onload = event => {
+          try {
+            const backup = JSON.parse(event.target.result);
+            
+            // Validação básica
+            if (!backup.version || !backup.config || !backup.services || !backup.stations) {
+              alert('Arquivo de backup inválido!');
+              return;
+            }
+            
+            if (!window.confirm('ATENÇÃO: Restaurar backup irá substituir TODAS as configurações atuais. Confirma?')) {
+              return;
+            }
+            
+            // Restaura usando cópia profunda para evitar referências compartilhadas
+            const restored = JSON.parse(JSON.stringify({
+              config:      backup.config,
+              services:    backup.services,
+              stations:    backup.stations,
+              mediaItems:  backup.mediaItems  || [],
+              called:      backup.called      || [],
+              queue:       backup.queue       || [],
+              currentCall: backup.currentCall || null,
+            }));
+
+            // Aplica diretamente no APP_STATE campo a campo
+            // (não substitui a referência para não quebrar listeners)
+            const s = window.APP_STATE;
+            s.config      = restored.config;
+            s.services    = restored.services;
+            s.stations    = restored.stations;
+            s.mediaItems  = restored.mediaItems;
+            s.called      = restored.called;
+            s.queue       = restored.queue;
+            s.currentCall = restored.currentCall;
+            
+            // Publica no Firebase e força re-render — sem reload
+            window.dispatchUpdate();
+            alert('Backup restaurado com sucesso!');
+          } catch (err) {
+            console.error('Erro ao importar backup:', err);
+            alert('Erro ao ler arquivo de backup: ' + err.message);
+          }
+        };
+        reader.readAsText(file);
+      };
+      input.click();
     }
 
     // =========================================================
@@ -1128,7 +1593,7 @@
     // =========================================================
     // printTicket — impressão direta (Electron) ou via janela (browser)
     // =========================================================
-    function printTicket(ticket, service, onPaperOut) {
+    function printTicket(ticket, service, onPaperOut, onPrintError) {
       const s = window.APP_STATE;
       const queueAhead = s.queue.filter(q => q.serviceId === service.id).length;
       const now = new Date();
@@ -1142,8 +1607,8 @@
 <title>Comprovante ${ticket}</title>
 <style>
   * { margin:0; padding:0; box-sizing:border-box; }
-  body { font-family: Arial, Helvetica, sans-serif; background:#fff; color:#000; width:72mm; margin:0; font-weight:700; }
-  .receipt { width:72mm; padding:4mm 2mm 6mm 2mm; text-align:center; display:inline-block; }
+  html, body { width:72mm; background:#fff; color:#000; font-family:Arial,Helvetica,sans-serif; font-weight:700; height:auto !important; overflow:hidden; }
+  .receipt { width:72mm; padding:4mm 3mm 8mm 3mm; text-align:center; display:block; }
   .unit { font-size:10pt; font-weight:700; text-transform:uppercase; letter-spacing:0.08em; margin-bottom:1mm; }
   .sector { font-size:18pt; font-weight:900; letter-spacing:0.15em; margin-bottom:2mm; }
   .divider { border:none; border-top:2px solid #000; margin:3mm 0; }
@@ -1154,7 +1619,6 @@
   .info-small { font-size:9pt; font-weight:700; color:#222; margin-bottom:1.5mm; }
   .welcome { font-size:9pt; font-weight:700; margin-top:3mm; line-height:1.5; }
   @page { size:80mm auto; margin:0; }
-  @media print { html, body { width:72mm; margin:0; } }
 </style>
 </head>
 <body>
@@ -1173,15 +1637,21 @@
 </body>
 </html>`;
 
-      // Electron: impressão direta sem diálogo
+      // Electron: impressão raw via ESC/POS
       if (window.electronAPI && window.electronAPI.isElectron) {
-        window.electronAPI.printTicket(html).then(result => {
-          if (!result.success && onPaperOut) {
-            // Falha na impressão — provável falta de papel
-            onPaperOut('out');
+        return window.electronAPI.printTicket({
+          ticket: { ticket, serviceId: service.id },
+          state: s
+        }).then(result => {
+          if (!result.success) {
+            if (onPaperOut) onPaperOut('out');
+            return false;
           }
+          return true;
+        }).catch(err => {
+          console.error('[printTicket] Erro:', err);
+          return false;
         });
-        return;
       }
 
       // Browser fallback: abre janela e chama window.print()
@@ -1245,21 +1715,52 @@
     }
 
     // =========================================================
-    // ServiceButton — Task 6.2
+    // ServiceButton — Bug Fix: Task 5.3
     // =========================================================
-    function ServiceButton({ service, onTicketGenerated, onPaperOut }) {
+    function ServiceButton({ service, onTicketGenerated, onPaperOut, onPrintError }) {
       const icon = service.id === 'priority' ? '⭐' : '🎫';
+      
+      const handleClick = async () => {
+        const isElectron = !!(window.electronAPI && window.electronAPI.isElectron);
+        console.log('[ServiceButton inline] Click - isElectron:', isElectron);
+
+        // Gera e imprime a senha — só commita no estado se impressão OK
+        if (isElectron) {
+          // Calcula o próximo número sem commitar ainda
+          const s = window.APP_STATE;
+          const svc = s.services.find(sv => sv.id === service.id);
+          if (!svc || !svc.active) return;
+          const nextCounter = (svc.counter % 999) + 1;
+          const ticketNum = String(nextCounter).padStart(3, '0');
+
+          // Tenta imprimir ANTES de commitar o ticket no estado
+          const printResult = await printTicket(ticketNum, service, onPaperOut, onPrintError);
+
+          if (printResult !== false) {
+            // Impressão OK — agora commita no estado
+            svc.counter = nextCounter;
+            s.queue.push({ id: crypto.randomUUID(), ticket: ticketNum, serviceId: service.id, time: Date.now() });
+            window.dispatchUpdate();
+            console.log('[ServiceButton inline] Senha gerada e impressa:', ticketNum);
+            onTicketGenerated(ticketNum, service);
+          } else {
+            console.log('[ServiceButton inline] Impressão falhou — ticket NÃO gerado');
+          }
+        } else {
+          // Modo web — gera normalmente (sem impressora física)
+          const ticket = generateTicket(service.id);
+          if (ticket) {
+            await printTicket(ticket, service, onPaperOut, onPrintError);
+            onTicketGenerated(ticket, service);
+          }
+        }
+      };
+      
       return (
         <button
           className="service-btn"
           style={{ background: service.color }}
-          onClick={() => {
-            const ticket = generateTicket(service.id);
-            if (ticket) {
-              printTicket(ticket, service, onPaperOut);
-              onTicketGenerated(ticket, service);
-            }
-          }}
+          onClick={handleClick}
         >
           <span className="service-btn-icon">{icon}</span>
           <span>{service.label}</span>
@@ -1268,10 +1769,24 @@
     }
 
     // =========================================================
-    // PaperOutCard — card de aviso de papel vazio
+    // PaperOutCard — aviso leve (papel acabando / near)
     // =========================================================
     function PaperOutCard({ status, onDismiss }) {
       const isNear = status === 'near';
+      
+      const handleDismiss = async () => {
+        // Se não é "near" (ou seja, é "out"), reseta o paperStatus no backend
+        if (!isNear && window.electronAPI && window.electronAPI.resetPaperStatus) {
+          try {
+            await window.electronAPI.resetPaperStatus();
+            console.log('[PaperOutCard] Paper status resetado');
+          } catch (error) {
+            console.error('[PaperOutCard] Erro ao resetar paper status:', error);
+          }
+        }
+        onDismiss();
+      };
+      
       return (
         <div className="paper-out-overlay">
           <div className="paper-out-card">
@@ -1284,10 +1799,39 @@
                 ? 'O papel da impressora está acabando. Avise o responsável para repor em breve.'
                 : 'A impressora está sem papel. Não é possível emitir senhas no momento.\n\nAvise o responsável para repor o papel.'}
             </div>
-            <button className="paper-out-dismiss" onClick={onDismiss}>
+            <button className="paper-out-dismiss" onClick={handleDismiss}>
               {isNear ? 'Entendido' : 'Papel Reposto — Continuar'}
             </button>
           </div>
+        </div>
+      );
+    }
+
+    // =========================================================
+    // ErrorCard — card fullscreen de erro crítico
+    // Exibido quando: papel acabou (out) ou falha de impressão
+    // =========================================================
+    function ErrorCard({ reason, onDismiss }) {
+      const reasonLabels = {
+        'paper-out':      'Impressora sem papel',
+        'print-failed':   'Falha na impressão',
+        'printer-error':  'Erro na impressora',
+      };
+      const detail = reasonLabels[reason] || 'Erro desconhecido';
+
+      return (
+        <div className="error-card-overlay">
+          <div className="error-card-icon">🚨</div>
+          <div className="error-card-title">
+            {reason === 'paper-out' ? 'SEM PAPEL' : 'ERRO'}
+          </div>
+          <div className="error-card-subtitle">
+            Chame um funcionário
+          </div>
+          <div className="error-card-detail">{detail}</div>
+          <button className="error-card-dismiss" onClick={onDismiss} style={{marginTop:'2rem'}}>
+            ✅ Funcionário Chegou — Resolvido
+          </button>
         </div>
       );
     }
@@ -1299,6 +1843,7 @@
       const s = window.APP_STATE;
       const [modal, setModal] = React.useState(null);
       const [paperStatus, setPaperStatus] = React.useState(null); // null | 'near' | 'out'
+      const [errorReason, setErrorReason] = React.useState(null); // null | 'paper-out' | 'print-failed' | 'printer-error'
       const activeServices = s.services.filter(sv => sv.active);
       const isElectron = !!(window.electronAPI && window.electronAPI.isElectron);
 
@@ -1306,12 +1851,50 @@
         if (isElectron) {
           // Electron: escuta status real da impressora via IPC
           window.electronAPI.getPaperStatus().then(status => {
-            if (status !== 'ok') setPaperStatus(status);
+            if (status === 'out') {
+              setErrorReason('paper-out');
+            } else if (status === 'near') {
+              setPaperStatus('near');
+            }
           });
           window.electronAPI.onPaperStatusChange((status) => {
-            setPaperStatus(status === 'ok' ? null : status);
+            if (status === 'out') {
+              setErrorReason('paper-out');
+              setPaperStatus(null);
+            } else if (status === 'near') {
+              setPaperStatus('near');
+              setErrorReason(null);
+            } else {
+              setPaperStatus(null);
+              setErrorReason(null);
+            }
           });
-          return () => window.electronAPI.offPaperStatusChange();
+          
+          // Polling mais frequente para detectar problemas rapidamente
+          const checkPrinterStatus = () => {
+            window.electronAPI.getPaperStatus().then(status => {
+              if (status === 'out') {
+                setErrorReason('paper-out');
+                setPaperStatus(null);
+              } else if (status === 'near') {
+                setPaperStatus('near');
+                if (errorReason === 'paper-out') setErrorReason(null);
+              } else {
+                if (errorReason === 'paper-out') setErrorReason(null);
+                setPaperStatus(null);
+              }
+            }).catch(err => {
+              console.error('Erro ao verificar status da impressora:', err);
+            });
+          };
+          
+          // Verifica a cada 3 segundos
+          const interval = setInterval(checkPrinterStatus, 3000);
+          
+          return () => {
+            clearInterval(interval);
+            window.electronAPI.offPaperStatusChange();
+          };
         } else {
           // Browser: polling via WebUSB (fallback, limitado)
           const poll = async () => {
@@ -1330,18 +1913,34 @@
               await printer.close();
               const out  = (byte & 0x08) !== 0;
               const near = (byte & 0x04) !== 0;
-              setPaperStatus(out ? 'out' : near ? 'near' : null);
+              if (out) {
+                setErrorReason('paper-out');
+                setPaperStatus(null);
+              } else {
+                setPaperStatus(near ? 'near' : null);
+                setErrorReason(null);
+              }
             } catch { /* WebUSB não disponível em file:// */ }
           };
           poll();
-          const interval = setInterval(poll, 30000);
+          const interval = setInterval(poll, 5000); // Polling a cada 5 segundos
           return () => clearInterval(interval);
         }
       }, [isElectron]);
 
+      // Callback de erro de impressão
+      const handlePrintError = (reason) => {
+        setErrorReason(reason || 'print-failed');
+        setPaperStatus(null);
+      };
+
       return (
         <div className="totem">
-          <div className="totem-sector">{s.config.sectorName}</div>
+          <div className="totem-header">
+            {s.config.logoUrl && <img src={s.config.logoUrl} className="totem-logo" alt="Logo" />}
+            <div className="totem-sector">{s.config.sectorName}</div>
+          </div>
+          {s.config.companySlogan && <div className="totem-slogan">{s.config.companySlogan}</div>}
           <div className="totem-instruction">Toque para retirar sua senha</div>
           {activeServices.length === 0 ? (
             <div className="totem-unavailable">⚠️ Sistema temporariamente indisponível</div>
@@ -1351,9 +1950,17 @@
                 <ServiceButton
                   key={svc.id}
                   service={svc}
-                  onPaperOut={(status) => setPaperStatus(status)}
+                  onPaperOut={(status) => {
+                    if (status === 'out') {
+                      setErrorReason('paper-out');
+                      setPaperStatus(null);
+                    } else {
+                      setPaperStatus(status);
+                    }
+                  }}
+                  onPrintError={handlePrintError}
                   onTicketGenerated={(ticket, service) => {
-                    if (paperStatus === 'out') return;
+                    if (errorReason || paperStatus === 'out') return;
                     setModal({ ticket, service });
                   }}
                 />
@@ -1367,11 +1974,31 @@
               onClose={() => setModal(null)}
             />
           )}
-          {paperStatus && (
+          {/* Aviso leve: papel acabando (near) */}
+          {paperStatus === 'near' && !errorReason && (
             <PaperOutCard
-              status={paperStatus}
+              status="near"
               onDismiss={() => setPaperStatus(null)}
             />
+          )}
+          {/* Erro crítico: papel acabou ou falha de impressão — bloqueia o totem */}
+          {errorReason && (
+            <ErrorCard
+              reason={errorReason}
+              onDismiss={() => {
+                setErrorReason(null);
+                setPaperStatus(null);
+              }}
+            />
+          )}
+          {/* QR Code Opcional (Sugestão Digital) */}
+          {s.config.enableDigitalTicket && (
+            <div className="totem-digital-info">
+              <span>Acompanhe sua senha pelo celular:</span>
+              <div className="totem-qr-placeholder">
+                <span style={{fontSize:'0.6rem'}}>QR CODE</span>
+              </div>
+            </div>
           )}
         </div>
       );
@@ -1386,31 +2013,90 @@
         .filter(m => m.active)
         .sort((a, b) => a.order - b.order);
       const [idx, setIdx] = React.useState(0);
+      const videoRef = React.useRef(null);
 
+      // Imagens: avança após duration. Vídeos: avançam via onEnded.
       React.useEffect(() => {
         if (activeSlides.length === 0 || paused) return;
-        const slide = activeSlides[idx] || activeSlides[0];
+        const slide = activeSlides[idx % activeSlides.length];
+        if (slide?.fileType === 'video' || /\.(mp4|webm|ogg)$/i.test(slide?.url || '')) return;
         const duration = (slide?.duration || 6) * 1000;
         const t = setTimeout(() => setIdx(i => (i + 1) % activeSlides.length), duration);
         return () => clearTimeout(t);
       }, [idx, paused, activeSlides.length]);
 
+      // Pause/resume do vídeo quando overlay aparece/desaparece
+      React.useEffect(() => {
+        const video = videoRef.current;
+        if (!video) return;
+        if (paused) {
+          video.pause();
+        } else {
+          // Retoma de onde parou (currentTime é preservado)
+          video.play().catch(() => {});
+        }
+      }, [paused]);
+
+      // Cleanup do vídeo quando componente desmonta
+      React.useEffect(() => {
+        return () => {
+          if (videoRef.current) {
+            try {
+              videoRef.current.pause();
+              videoRef.current.src = '';
+              videoRef.current.load();
+            } catch (err) {
+              console.error('Erro ao limpar vídeo:', err);
+            }
+          }
+        };
+      }, []);
+
       if (activeSlides.length === 0) return null;
       const slide = activeSlides[idx % activeSlides.length];
+      const isVideo = slide.fileType === 'video' || /\.(mp4|webm|ogg)$/i.test(slide.url || '');
 
-      const bgStyle = slide.url
+      const bgStyle = (!isVideo && slide.url)
         ? { backgroundImage: `url(${slide.url})` }
         : { background: slide.fallbackColor };
 
+      const handleVideoEnded = () => {
+        try {
+          setIdx(i => (i + 1) % activeSlides.length);
+        } catch (err) {
+          console.error('Erro ao avançar slide de vídeo:', err);
+        }
+      };
+
+      const handleVideoError = (e) => {
+        console.error('Erro ao carregar vídeo:', e);
+        setIdx(i => (i + 1) % activeSlides.length);
+      };
+
       return (
         <div className="media-carousel">
-          <div className="media-slide" style={bgStyle}>
-            <div className="media-slide-overlay" />
-            <div className="media-slide-content">
-              <div className="media-slide-title">{slide.title}</div>
-              {slide.caption && <div className="media-slide-caption">{slide.caption}</div>}
+          {isVideo ? (
+            <video
+              ref={videoRef}
+              key={slide.url}
+              src={slide.url}
+              autoPlay={!paused}
+              muted
+              loop={false}
+              playsInline
+              style={{ position:'absolute', inset:0, width:'100%', height:'100%', objectFit:'cover' }}
+              onEnded={handleVideoEnded}
+              onError={handleVideoError}
+            />
+          ) : (
+            <div className="media-slide" style={bgStyle}>
+              <div className="media-slide-overlay" />
+              <div className="media-slide-content">
+                <div className="media-slide-title">{slide.title}</div>
+                {slide.caption && <div className="media-slide-caption">{slide.caption}</div>}
+              </div>
             </div>
-          </div>
+          )}
           <div className="media-dots">
             {activeSlides.map((_, i) => (
               <div key={i} className={`media-dot${i === idx % activeSlides.length ? ' active' : ''}`} />
@@ -1426,9 +2112,17 @@
     function PainelModule() {
       const s = window.APP_STATE;
       const [flash, setFlash] = React.useState(false);
+      const [zoomIn, setZoomIn] = React.useState(false);
+      const [showOverlay, setShowOverlay] = React.useState(false);
+      const [overlayFading, setOverlayFading] = React.useState(false);
+      const [fadeOut, setFadeOut] = React.useState(false);
       const [clock, setClock] = React.useState(new Date());
       const [mediaPaused, setMediaPaused] = React.useState(false);
+      const [recentHighlight, setRecentHighlight] = React.useState(null);
       const prevCallRef = React.useRef(null);
+      const overlayTimerRef = React.useRef(null);
+      const bellAudioRef = React.useRef(null);
+      const bellInitializedRef = React.useRef(false);
 
       // Clock
       React.useEffect(() => {
@@ -1436,20 +2130,163 @@
         return () => clearInterval(t);
       }, []);
 
-      // Flash on new call
+      // Inicializa URL da campainha via Electron (uma vez apenas)
       React.useEffect(() => {
-        const cur = s.currentCall;
-        const prev = prevCallRef.current;
-        if (cur && JSON.stringify(cur) !== JSON.stringify(prev)) {
-          prevCallRef.current = cur;
-          setFlash(true);
-          if (s.config.pauseMediaOnCall) {
-            setMediaPaused(true);
-            setTimeout(() => setMediaPaused(false), 3000);
-          }
-          setTimeout(() => setFlash(false), 1200);
+        if (bellInitializedRef.current) return;
+        bellInitializedRef.current = true;
+
+        if (window.electronAPI?.getBellBase64) {
+          window.electronAPI.getBellBase64().then(dataUrl => {
+            if (dataUrl && !bellAudioRef.current) {
+              try {
+                bellAudioRef.current = new Audio(dataUrl);
+                bellAudioRef.current.volume = s.config.soundVolume || 0.8;
+                bellAudioRef.current.load();
+              } catch (err) {
+                console.error('Erro ao inicializar campainha:', err);
+              }
+            }
+          }).catch(err => {
+            console.error('Erro ao obter base64 da campainha:', err);
+          });
+        } else if (window.electronAPI?.getBellUrl) {
+          window.electronAPI.getBellUrl().then(url => {
+            if (url && !bellAudioRef.current) {
+              try {
+                bellAudioRef.current = new Audio(url);
+                bellAudioRef.current.volume = s.config.soundVolume || 0.8;
+              } catch (err) {
+                console.error('Erro ao inicializar campainha:', err);
+              }
+            }
+          }).catch(err => {
+            console.error('Erro ao obter URL da campainha:', err);
+          });
         }
-      });
+      }, []);
+
+      // Função para tocar som de chamada
+      const playCallSound = React.useCallback((ticket, stationLabel) => {
+        try {
+          const mode = s.config.callSoundMode || 'both';
+          if (mode === 'none') return;
+
+          const volume = s.config.soundVolume || 0.8;
+
+          // Campainha (MP3)
+          if (mode === 'bell' || mode === 'both') {
+            if (bellAudioRef.current) {
+              bellAudioRef.current.volume = volume;
+              bellAudioRef.current.currentTime = 0;
+              bellAudioRef.current.play().catch(err => {
+                console.error('Erro ao tocar campainha:', err);
+              });
+            }
+          }
+
+          // Voz sintética
+          if (mode === 'voice' || mode === 'both') {
+            const delay = (mode === 'both' && bellAudioRef.current) ? 1200 : 0;
+            setTimeout(() => {
+              try {
+                const utterance = new SpeechSynthesisUtterance(`Senha ${ticket}, ${stationLabel}`);
+                utterance.lang   = 'pt-BR';
+                utterance.volume = volume;
+                utterance.rate   = 0.9;
+                window.speechSynthesis.cancel();
+                window.speechSynthesis.speak(utterance);
+              } catch (err) {
+                console.error('Erro ao sintetizar voz:', err);
+              }
+            }, delay);
+          }
+        } catch (err) {
+          console.error('Erro em playCallSound:', err);
+        }
+      }, [s.config.callSoundMode, s.config.soundVolume]);
+
+      // Função para fechar o overlay
+      const closeOverlay = React.useCallback(() => {
+        if (overlayTimerRef.current) {
+          clearTimeout(overlayTimerRef.current);
+          overlayTimerRef.current = null;
+        }
+        setOverlayFading(true);
+        setTimeout(() => {
+          setShowOverlay(false);
+          setOverlayFading(false);
+        }, 500);
+      }, []);
+
+      // Dispara overlay + som + destaque quando currentCall muda
+      React.useEffect(() => {
+        try {
+          const cur = s.currentCall;
+          const prev = prevCallRef.current;
+
+          // Só age quando há uma chamada nova diferente da anterior
+          if (!cur) return;
+          if (JSON.stringify(cur) === JSON.stringify(prev)) return;
+
+          prevCallRef.current = cur;
+
+          // Cancela timers anteriores para evitar acúmulo
+          if (overlayTimerRef.current) {
+            clearTimeout(overlayTimerRef.current);
+            overlayTimerRef.current = null;
+          }
+
+          // Abre overlay imediatamente (sobrepõe qualquer um aberto)
+          setOverlayFading(false);
+          setShowOverlay(true);
+          setFlash(true);
+          setZoomIn(true);
+          setFadeOut(false); // Reset fadeOut para nova chamada
+
+          // Toca som de chamada
+          const curStation = s.stations.find(st => st.id === cur.stationId);
+          playCallSound(cur.ticket, curStation?.label || `Guichê ${cur.stationId}`);
+
+          // Destaque na lista de chamadas recentes
+          setRecentHighlight(cur.ticket);
+
+          if (s.config.pauseMediaOnCall) setMediaPaused(true);
+
+          // Timers de limpeza
+          const t1 = setTimeout(() => setFlash(false), 1200);
+          const t2 = setTimeout(() => setZoomIn(false), 600);
+          const t3 = setTimeout(() => setRecentHighlight(null), 2000);
+          const t4 = setTimeout(() => setMediaPaused(false), 3000);
+
+          // Fade-out e remoção do overlay
+          const duration  = (s.config.overlayDuration || 5) * 1000;
+          const fadeStart = Math.max(duration - 500, 0);
+
+          overlayTimerRef.current = setTimeout(() => {
+            setOverlayFading(true);
+            setTimeout(() => {
+              setShowOverlay(false);
+              setOverlayFading(false);
+              overlayTimerRef.current = null;
+            }, 500);
+          }, fadeStart);
+
+          // Cleanup: cancela todos os timers se o componente desmontar
+          return () => {
+            clearTimeout(t1);
+            clearTimeout(t2);
+            clearTimeout(t3);
+            clearTimeout(t4);
+            if (overlayTimerRef.current) {
+              clearTimeout(overlayTimerRef.current);
+              overlayTimerRef.current = null;
+            }
+          };
+        } catch (err) {
+          console.error('Erro no useEffect de currentCall:', err);
+        }
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+      }, [s.currentCall]);
 
       const cur = s.currentCall;
       const curService = cur ? s.services.find(sv => sv.id === cur.serviceId) : null;
@@ -1464,54 +2301,25 @@
       return (
         <div className="painel">
           <div className="painel-header">
-            <span className="painel-header-sector">{s.config.sectorName}</span>
-            <span style={{ fontFamily: 'Rajdhani', fontSize: '0.9rem', color: 'var(--text-muted)' }}>{s.config.unitName}</span>
-          </div>
-          <div className="painel-body">
-            {/* Main area */}
-            <div className="painel-main">
-              <div className="current-call-area">
-                {cur ? (
-                  <>
-                    <div className="current-call-label">Senha Atual</div>
-                    <div
-                      className={`current-call-number${flash ? ' flash' : ''}`}
-                      style={{ color: curService?.color || 'var(--accent)' }}
-                    >
-                      {cur.ticket}
-                    </div>
-                    <span
-                      className="current-call-type"
-                      style={{ background: curService?.color || 'var(--accent)' }}
-                    >
-                      {curService?.label || cur.serviceId}
-                    </span>
-                    <div className="current-call-station">
-                      {curStation?.label || `Guichê ${cur.stationId}`}
-                    </div>
-                  </>
-                ) : (
-                  <div className="painel-waiting">
-                    <div style={{ fontSize: '4rem' }}>🎫</div>
-                    <div className="painel-waiting-text">Aguardando chamada...</div>
-                  </div>
-                )}
-              </div>
-              {/* Queue counters */}
-              <div className="queue-counters">
-                {s.services.filter(sv => sv.active).map(svc => {
-                  const count = s.queue.filter(q => q.serviceId === svc.id).length;
-                  return (
-                    <div key={svc.id} className="queue-counter-card" style={{ borderColor: svc.color }}>
-                      <div className="queue-counter-value" style={{ color: svc.color }}>{count}</div>
-                      <div className="queue-counter-label">{svc.label} aguardando</div>
-                    </div>
-                  );
-                })}
+            <div className="painel-header-brand">
+              {s.config.logoUrl && <img src={s.config.logoUrl} className="painel-logo" alt="Logo" />}
+              <div className="painel-header-text">
+                <span className="painel-header-sector">{s.config.sectorName}</span>
+                <span className="painel-header-unit">{s.config.unitName}</span>
               </div>
             </div>
-            {/* Sidebar */}
+            {s.config.companySlogan && <div className="painel-slogan">{s.config.companySlogan}</div>}
+          </div>
+          <div className="painel-body">
+            {/* Área principal — mídia indoor sempre em tela cheia */}
+            <div className="painel-main painel-main--media">
+              <MediaCarousel paused={mediaPaused} />
+            </div>
+
+            {/* Sidebar — últimas chamadas no topo, senha atual embaixo */}
             <div className="painel-sidebar">
+
+              {/* Últimas chamadas — topo */}
               <div className="recent-calls">
                 <div className="recent-calls-title">Últimas chamadas</div>
                 {recentCalls.length === 0 ? (
@@ -1520,21 +2328,91 @@
                   const svc = s.services.find(sv => sv.id === c.serviceId);
                   const st = s.stations.find(st => st.id === c.stationId);
                   const t = new Date(c.time).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+                  const isHighlighted = c.ticket === recentHighlight;
                   return (
-                    <div key={i} className="recent-call-item">
+                    <div key={i} className={`recent-call-item${isHighlighted ? ' highlight' : ''}`}>
                       <span className="recent-call-ticket" style={{ color: svc?.color }}>{c.ticket}</span>
                       <span className="recent-call-meta">{svc?.label} · {st?.label || `G${c.stationId}`} · {t}</span>
                     </div>
                   );
                 })}
               </div>
-              <MediaCarousel paused={mediaPaused} />
+
+              {/* Senha atual — embaixo */}
+              {cur ? (
+                <div className={`current-call-area${fadeOut ? ' fade-exit' : ''}`}>
+                  <div className="current-call-label">Senha Atual</div>
+                  <div
+                    className={`current-call-number${flash ? ' flash' : ''}${zoomIn ? ' zoom-in' : ''}`}
+                    style={{ color: curService?.color || 'var(--accent)', fontSize: '5rem' }}
+                  >
+                    {cur.ticket}
+                  </div>
+                  <span
+                    className="current-call-type"
+                    style={{ background: curService?.color || 'var(--accent)' }}
+                  >
+                    {curService?.label || cur.serviceId}
+                  </span>
+                  <div className="current-call-station">
+                    {curStation?.label || `Guichê ${cur.stationId}`}
+                  </div>
+                  {/* Contadores de fila */}
+                  <div className="queue-counters" style={{ flexDirection: 'column', gap: '0.4rem', marginTop: '0.75rem' }}>
+                    {s.services.filter(sv => sv.active).map(svc => {
+                      const count = s.queue.filter(q => q.serviceId === svc.id).length;
+                      return (
+                        <div key={svc.id} className="queue-counter-card" style={{ borderColor: svc.color }}>
+                          <div className="queue-counter-value" style={{ color: svc.color, fontSize: '1.5rem' }}>{count}</div>
+                          <div className="queue-counter-label">{svc.label} aguardando</div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              ) : (
+                <div className="painel-waiting" style={{ padding: '1.5rem', textAlign: 'center', borderTop: '1px solid var(--border)' }}>
+                  <div style={{ fontSize: '2.5rem' }}>🎫</div>
+                  <div className="painel-waiting-text" style={{ fontSize: '1.2rem' }}>Aguardando chamada...</div>
+                </div>
+              )}
             </div>
           </div>
           <div className="painel-footer">
             <span>{s.config.footerMessage}</span>
             <span>{dateStr} · {timeStr}</span>
           </div>
+          {/* Overlay fullscreen de chamada */}
+          {showOverlay && cur && (() => {
+            const color = curService?.color || '#2563eb';
+            const totalQueue = s.queue.length;
+            // Gera versão clara e glow da cor do serviço
+            return (
+              <div
+                className={`call-overlay${overlayFading ? ' fade-exit' : ''}`}
+                onClick={closeOverlay}
+                style={{
+                  '--co-color':       color,
+                  '--co-color-light': `${color}22`,
+                  '--co-color-glow':  `${color}55`,
+                  '--co-bg':          `${color}0d`,
+                  cursor: 'pointer',
+                }}
+              >
+                <div className="call-overlay-label">Senha Chamada</div>
+                <div className="call-overlay-number">{cur.ticket}</div>
+                <div className="call-overlay-station">
+                  {curStation?.label || `Guichê ${cur.stationId}`}
+                </div>
+                {/* Fila visível no rodapé */}
+                {totalQueue > 0 && (
+                  <div className="call-overlay-queue">
+                    {totalQueue} senha{totalQueue !== 1 ? 's' : ''} aguardando
+                  </div>
+                )}
+              </div>
+            );
+          })()}
         </div>
       );
     }
@@ -1547,13 +2425,38 @@
       const activeStations = s.stations.filter(st => st.active);
       const [stationId, setStationId] = React.useState(activeStations[0]?.id || 1);
 
+      // Atalhos de teclado (Task 8.2)
+      React.useEffect(() => {
+        const handleKeys = (e) => {
+          if (e.code === 'Space') {
+            e.preventDefault();
+            if (s.queue.length > 0) callNext(stationId);
+          } else if (e.code === 'KeyR') {
+            if (s.currentCall) repeatCall();
+          }
+        };
+        window.addEventListener('keydown', handleKeys);
+        return () => window.removeEventListener('keydown', handleKeys);
+      }, [stationId, s.queue.length, s.currentCall]);
+
       const allEmpty = s.queue.length === 0;
 
       return (
         <div className="operador">
+          {/* Aviso de papel para o operador */}
+          {s.paperStatus === 'out' && (
+            <div style={{ background: 'var(--danger)', color: '#fff', padding: '1rem', borderRadius: 'var(--radius)', marginBottom: '1rem', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '1rem', animation: 'pulse-danger 2s infinite' }}>
+              <span style={{ fontSize: '1.5rem' }}>🖨️</span>
+              <div>
+                <strong>Atenção: Impressora sem papel!</strong><br />
+                O totem está bloqueado e não emitirá novas senhas até que o papel seja reposto.
+              </div>
+            </div>
+          )}
+
           {/* Header */}
           <div className="operador-header">
-            <div className="operador-header-title">BALCÃO — Operador</div>
+            <div className="operador-header-title">Painel de senha do Ni — Operador</div>
             <div className="operador-station-selector">
               <span>Guichê:</span>
               <select value={stationId} onChange={e => setStationId(Number(e.target.value))}>
@@ -1669,7 +2572,7 @@
       return (
         <div className="admin">
           <div className="admin-header">
-            <div className="admin-header-title">BALCÃO — Administrador</div>
+            <div className="admin-header-title">Painel de senha do Ni — Administrador</div>
           </div>
           <div className="admin-tabs">
             {tabs.map(t => (
@@ -1729,6 +2632,100 @@
               ))}
             </div>
           </div>
+          {window.electronAPI && <MobileAccessCard />}
+        </div>
+      );
+    }
+
+    // --- Mobile Access Card (QR Code para operador mobile) ---
+    function MobileAccessCard() {
+      const [ip, setIp] = React.useState('...');
+      const [port, setPort] = React.useState(3080);
+      const [customPath, setCustomPath] = React.useState('/mobile.html');
+      const [qrDataUrl, setQrDataUrl] = React.useState('');
+      const [generating, setGenerating] = React.useState(false);
+
+      const mobileUrl = ip === '...' ? '' : `http://${ip}:${port}${customPath}`;
+
+      // Gera QR Code sempre que a URL mudar
+      React.useEffect(() => {
+        if (!mobileUrl || !window.electronAPI?.generateQrCode) return;
+        setGenerating(true);
+        window.electronAPI.generateQrCode(mobileUrl)
+          .then(dataUrl => { if (dataUrl) setQrDataUrl(dataUrl); })
+          .catch(() => {})
+          .finally(() => setGenerating(false));
+      }, [mobileUrl]);
+
+      // Carrega IP local ao montar
+      React.useEffect(() => {
+        if (window.electronAPI?.getLocalIp) {
+          window.electronAPI.getLocalIp().then(localIp => setIp(localIp));
+        }
+      }, []);
+
+      return (
+        <div className="admin-section" style={{marginTop:'1rem'}}>
+          <div className="admin-section-title">📱 Acesso Mobile — Operador</div>
+          <div style={{display:'flex',alignItems:'flex-start',gap:'1.5rem',flexWrap:'wrap',marginTop:'0.75rem'}}>
+            {/* QR Code */}
+            <div style={{flexShrink:0}}>
+              {qrDataUrl && !generating ? (
+                <img src={qrDataUrl} alt="QR Code" style={{width:160,height:160,borderRadius:'var(--radius)',border:'1px solid var(--border)',display:'block'}} />
+              ) : (
+                <div style={{width:160,height:160,background:'var(--bg-elevated)',borderRadius:'var(--radius)',border:'1px solid var(--border)',display:'flex',alignItems:'center',justifyContent:'center',fontFamily:'Rajdhani',color:'var(--text-muted)',fontSize:'0.85rem',textAlign:'center',padding:'1rem'}}>
+                  {generating ? '⏳ Gerando...' : ip === '...' ? 'Carregando...' : 'QR Code'}
+                </div>
+              )}
+            </div>
+
+            {/* Controles */}
+            <div style={{flex:1,minWidth:260}}>
+              <div style={{display:'flex',gap:'0.5rem',marginBottom:'0.5rem',flexWrap:'wrap'}}>
+                <div style={{flex:'0 0 auto'}}>
+                  <div style={{fontFamily:'Rajdhani',fontSize:'0.8rem',color:'var(--text-muted)',marginBottom:'0.2rem'}}>IP</div>
+                  <input
+                    style={{background:'var(--bg-elevated)',border:'1px solid var(--border)',borderRadius:'var(--radius)',padding:'0.35rem 0.6rem',fontFamily:'Courier New',fontSize:'0.95rem',color:'var(--text-primary)',width:160}}
+                    value={ip}
+                    onChange={e => setIp(e.target.value)}
+                  />
+                </div>
+                <div style={{flex:'0 0 auto'}}>
+                  <div style={{fontFamily:'Rajdhani',fontSize:'0.8rem',color:'var(--text-muted)',marginBottom:'0.2rem'}}>Porta</div>
+                  <input
+                    type="number"
+                    style={{background:'var(--bg-elevated)',border:'1px solid var(--border)',borderRadius:'var(--radius)',padding:'0.35rem 0.6rem',fontFamily:'Courier New',fontSize:'0.95rem',color:'var(--text-primary)',width:90}}
+                    value={port}
+                    onChange={e => setPort(Number(e.target.value))}
+                  />
+                </div>
+                <div style={{flex:1,minWidth:120}}>
+                  <div style={{fontFamily:'Rajdhani',fontSize:'0.8rem',color:'var(--text-muted)',marginBottom:'0.2rem'}}>Caminho</div>
+                  <input
+                    style={{background:'var(--bg-elevated)',border:'1px solid var(--border)',borderRadius:'var(--radius)',padding:'0.35rem 0.6rem',fontFamily:'Courier New',fontSize:'0.95rem',color:'var(--text-primary)',width:'100%'}}
+                    value={customPath}
+                    onChange={e => setCustomPath(e.target.value)}
+                  />
+                </div>
+              </div>
+
+              <div style={{fontFamily:'Courier New',fontSize:'1rem',fontWeight:'bold',color:'var(--accent)',background:'var(--bg-elevated)',padding:'0.5rem 1rem',borderRadius:'var(--radius)',border:'1px solid var(--border)',userSelect:'all',wordBreak:'break-all',marginBottom:'0.5rem'}}>
+                {mobileUrl || '...'}
+              </div>
+
+              <div style={{fontFamily:'Rajdhani',fontSize:'0.85rem',color:'var(--text-muted)',marginBottom:'0.75rem'}}>
+                ⚠ O celular deve estar na mesma rede Wi-Fi que este computador.
+              </div>
+
+              <button
+                className="btn btn-secondary"
+                style={{fontSize:'0.85rem'}}
+                onClick={() => { if (mobileUrl) navigator.clipboard?.writeText(mobileUrl); }}
+              >
+                📋 Copiar Link
+              </button>
+            </div>
+          </div>
         </div>
       );
     }
@@ -1784,16 +2781,46 @@
     function AdminMedia() {
       const s = window.APP_STATE;
       const [, forceRender] = React.useState(0);
+      const [localFiles, setLocalFiles] = React.useState([]);
+      const [loadingLocal, setLoadingLocal] = React.useState(false);
       const refresh = () => { window.dispatchUpdate(); forceRender(n => n+1); };
+
+      // Carrega lista de arquivos locais da pasta media/
+      const loadLocalFiles = React.useCallback(async () => {
+        if (!window.electronAPI?.listMediaFiles) return;
+        setLoadingLocal(true);
+        const files = await window.electronAPI.listMediaFiles();
+        setLocalFiles(files);
+        setLoadingLocal(false);
+      }, []);
+
+      React.useEffect(() => { loadLocalFiles(); }, []);
 
       const updateSlide = (id, field, val) => {
         const slide = s.mediaItems.find(m => m.id === id);
         if (slide) { slide[field] = val; refresh(); }
       };
 
+      // Adiciona slide com arquivo local selecionado
+      const addLocalSlide = (file) => {
+        const maxOrder = s.mediaItems.reduce((a, m) => Math.max(a, m.order), 0);
+        s.mediaItems.push({
+          id: crypto.randomUUID(),
+          title: file.name.replace(/\.[^.]+$/, ''),
+          caption: '',
+          url: file.url,
+          fileType: file.type,  // 'image' | 'video'
+          fallbackColor: '#1e293b',
+          duration: file.type === 'video' ? 30 : 6,
+          active: true,
+          order: maxOrder + 1,
+        });
+        refresh();
+      };
+
       const addSlide = () => {
         const maxOrder = s.mediaItems.reduce((a, m) => Math.max(a, m.order), 0);
-        s.mediaItems.push({ id: crypto.randomUUID(), title: 'Novo Slide', caption: '', url: '', fallbackColor: '#1e293b', duration: 6, active: true, order: maxOrder + 1 });
+        s.mediaItems.push({ id: crypto.randomUUID(), title: 'Novo Slide', caption: '', url: '', fileType: 'image', fallbackColor: '#1e293b', duration: 6, active: true, order: maxOrder + 1 });
         refresh();
       };
 
@@ -1812,6 +2839,44 @@
         refresh();
       };
 
+      // Importa arquivo via diálogo do sistema
+      const importFile = async () => {
+        if (!window.electronAPI?.importMediaFile) return;
+        const imported = await window.electronAPI.importMediaFile();
+        if (imported && imported.length > 0) {
+          await loadLocalFiles();
+          imported.forEach(f => {
+            // Só adiciona slide se ainda não existe
+            if (!s.mediaItems.some(m => m.url === f.url)) addLocalSlide(f);
+          });
+        }
+      };
+
+      // Seleciona uma pasta — todos os arquivos viram slides automaticamente
+      const selectFolder = async () => {
+        if (!window.electronAPI?.selectMediaFolder) return;
+        const result = await window.electronAPI.selectMediaFolder();
+        if (result.canceled || !result.files.length) return;
+        // Remove slides antigos que vieram de pasta (não da pasta media/)
+        // e adiciona todos os arquivos da nova pasta
+        result.files.forEach(f => {
+          if (!s.mediaItems.some(m => m.url === f.url)) addLocalSlide(f);
+        });
+        alert(`✅ ${result.files.length} arquivo(s) adicionado(s) ao carrossel da pasta:\n${result.folder}`);
+      };
+
+      // Remove arquivo local da pasta media/
+      const deleteLocalFile = async (filename) => {
+        if (!window.electronAPI?.deleteMediaFile) return;
+        if (!window.confirm(`Excluir o arquivo "${filename}" da pasta media/?`)) return;
+        await window.electronAPI.deleteMediaFile(filename);
+        // Remove slides que usavam esse arquivo
+        const url = localFiles.find(f => f.name === filename)?.url;
+        if (url) s.mediaItems = s.mediaItems.filter(m => m.url !== url);
+        await loadLocalFiles();
+        refresh();
+      };
+
       const sorted = [...s.mediaItems].sort((a,b) => a.order - b.order);
 
       return (
@@ -1825,6 +2890,62 @@
               Pausar carrossel ao chamar senha
             </label>
           </div>
+
+          {/* Arquivos locais disponíveis */}
+          {window.electronAPI && (
+            <div className="admin-section" style={{marginBottom:'0.75rem'}}>
+              <div className="admin-section-title" style={{display:'flex',alignItems:'center',justifyContent:'space-between',flexWrap:'wrap',gap:'0.5rem'}}>
+                <span>📁 Arquivos Locais (pasta media/)</span>
+                <div style={{display:'flex',gap:'0.5rem'}}>
+                  <button className="btn btn-secondary" style={{padding:'0.3rem 0.9rem',fontSize:'0.85rem'}} onClick={selectFolder} title="Selecionar uma pasta — todos os arquivos viram slides automaticamente">
+                    📂 Usar Pasta
+                  </button>
+                  <button className="btn btn-primary" style={{padding:'0.3rem 0.9rem',fontSize:'0.85rem'}} onClick={importFile} title="Selecionar arquivos individuais e copiar para a pasta media/">
+                    + Importar Arquivo
+                  </button>
+                </div>
+              </div>
+              {loadingLocal ? (
+                <div style={{fontFamily:'Rajdhani',color:'var(--text-muted)',fontSize:'0.9rem'}}>Carregando...</div>
+              ) : localFiles.length === 0 ? (
+                <div style={{fontFamily:'Rajdhani',color:'var(--text-muted)',fontSize:'0.9rem'}}>
+                  Nenhum arquivo na pasta <code>media/</code>. Clique em "Importar Arquivo" para adicionar.
+                </div>
+              ) : (
+                <div style={{display:'flex',flexWrap:'wrap',gap:'0.75rem',marginTop:'0.5rem'}}>
+                  {localFiles.map(f => (
+                    <div key={f.name} style={{
+                      background:'var(--bg-elevated)',
+                      border:'1px solid var(--border)',
+                      borderRadius:'var(--radius)',
+                      padding:'0.5rem 0.75rem',
+                      display:'flex',
+                      alignItems:'center',
+                      gap:'0.5rem',
+                      fontFamily:'Rajdhani',
+                      fontSize:'0.9rem',
+                    }}>
+                      <span>{f.type === 'video' ? '🎬' : '🖼'}</span>
+                      <span style={{maxWidth:160,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}} title={f.name}>{f.name}</span>
+                      <button
+                        className="btn btn-success"
+                        style={{padding:'0.15rem 0.5rem',fontSize:'0.75rem'}}
+                        onClick={() => addLocalSlide(f)}
+                        title="Adicionar ao carrossel"
+                      >+ Slide</button>
+                      <button
+                        className="btn btn-danger"
+                        style={{padding:'0.15rem 0.5rem',fontSize:'0.75rem'}}
+                        onClick={() => deleteLocalFile(f.name)}
+                        title="Excluir arquivo"
+                      >✕</button>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+
           <div className="admin-section">
             <div className="admin-section-title">Slides do Carrossel</div>
             {sorted.map((slide, i) => (
@@ -1836,16 +2957,16 @@
                 </label>
                 <input className="admin-input" style={{width:140}} value={slide.title} onChange={e => updateSlide(slide.id, 'title', e.target.value)} placeholder="Título" />
                 <input className="admin-input" style={{width:120}} value={slide.caption} onChange={e => updateSlide(slide.id, 'caption', e.target.value)} placeholder="Legenda" />
-                <input className="admin-input" style={{width:160}} value={slide.url} onChange={e => updateSlide(slide.id, 'url', e.target.value)} placeholder="URL da imagem" />
+                <input className="admin-input" style={{width:160}} value={slide.url} onChange={e => updateSlide(slide.id, 'url', e.target.value)} placeholder="URL ou arquivo local" />
                 <input type="color" value={slide.fallbackColor} onChange={e => updateSlide(slide.id, 'fallbackColor', e.target.value)} style={{width:36,height:28,border:'none',background:'none',cursor:'pointer'}} title="Cor de fallback" />
-                <input className="admin-input" type="number" style={{width:70}} value={slide.duration} min={1} max={60} onChange={e => updateSlide(slide.id, 'duration', Number(e.target.value))} />
+                <input className="admin-input" type="number" style={{width:70}} value={slide.duration} min={1} max={300} onChange={e => updateSlide(slide.id, 'duration', Number(e.target.value))} />
                 <span style={{fontFamily:'Rajdhani',fontSize:'0.8rem',color:'var(--text-muted)'}}>s</span>
                 <button className="btn btn-secondary" style={{padding:'0.25rem 0.5rem',fontSize:'0.8rem'}} onClick={() => moveSlide(slide.id, -1)} disabled={i===0}>▲</button>
                 <button className="btn btn-secondary" style={{padding:'0.25rem 0.5rem',fontSize:'0.8rem'}} onClick={() => moveSlide(slide.id, 1)} disabled={i===sorted.length-1}>▼</button>
                 <button className="btn btn-danger" style={{padding:'0.25rem 0.5rem',fontSize:'0.8rem'}} onClick={() => removeSlide(slide.id)}>✕</button>
               </div>
             ))}
-            <button className="btn btn-success" style={{marginTop:'0.75rem'}} onClick={addSlide}>+ Adicionar Slide</button>
+            <button className="btn btn-success" style={{marginTop:'0.75rem'}} onClick={addSlide}>+ Adicionar Slide (URL)</button>
           </div>
         </div>
       );
@@ -1878,10 +2999,10 @@
             {s.stations.map(st => (
               <div key={st.id} className="station-editor-row">
                 <label className="toggle">
-                  <input type="checkbox" checked={st.active} onChange={e => { st.active = e.target.checked; refresh(); }} />
+                  <input type="checkbox" checked={st.active} onChange={e => { st.active = e.target.checked; window.dispatchUpdate(); }} />
                   <span className="toggle-slider" />
                 </label>
-                <input className="admin-input" style={{width:160}} value={st.label} onChange={e => { st.label = e.target.value; refresh(); }} />
+                <input className="admin-input" style={{width:160}} value={st.label} onChange={e => { st.label = e.target.value; window.dispatchUpdate(); }} />
                 {s.currentCall?.stationId === st.id && <span className="status-badge status-ok">● Ativo agora</span>}
               </div>
             ))}
@@ -1890,17 +3011,233 @@
       );
     }
 
+    // =========================================================
+    // FullResetButton — Reset Completo protegido por senha
+    // Senha fixa: Nicolas123
+    // =========================================================
+    function FullResetButton() {
+      const ADMIN_PASSWORD = 'Nicolas123';
+      const [showModal, setShowModal] = React.useState(false);
+      const [pwd, setPwd] = React.useState('');
+      const [error, setError] = React.useState('');
+
+      const handleOpen = () => {
+        setPwd('');
+        setError('');
+        setShowModal(true);
+      };
+
+      const handleConfirm = () => {
+        if (pwd !== ADMIN_PASSWORD) {
+          setError('Senha incorreta!');
+          setPwd('');
+          return;
+        }
+        setShowModal(false);
+        if (window.confirm('ATENÇÃO: Reset completo irá apagar TUDO. Esta ação é irreversível. Confirma?')) {
+          fullReset();
+        }
+      };
+
+      const handleKeyPress = (e) => {
+        if (e.key === 'Enter') handleConfirm();
+        if (e.key === 'Escape') setShowModal(false);
+      };
+
+      return (
+        <>
+          <button className="btn btn-danger" onClick={handleOpen}>⚠️ Reset Completo</button>
+
+          {showModal && (
+            <div style={{
+              position:'fixed', inset:0, background:'rgba(0,0,0,0.6)',
+              display:'flex', alignItems:'center', justifyContent:'center',
+              zIndex:9999, animation:'fadeIn 0.2s ease'
+            }}>
+              <div style={{
+                background:'var(--bg-secondary)', border:'1px solid var(--border)',
+                borderRadius:'var(--radius-lg)', padding:'2rem', width:360,
+                boxShadow:'0 20px 60px rgba(0,0,0,0.3)', animation:'slideIn 0.2s ease'
+              }}>
+                <div style={{
+                  fontFamily:'Oswald', fontSize:'1.3rem', fontWeight:700,
+                  color:'var(--danger)', marginBottom:'0.5rem', letterSpacing:'0.05em'
+                }}>
+                  🔒 Confirmação de Segurança
+                </div>
+                <div style={{
+                  fontFamily:'Rajdhani', fontSize:'0.95rem',
+                  color:'var(--text-secondary)', marginBottom:'1.25rem', lineHeight:1.5
+                }}>
+                  Esta operação apaga <strong>todos os dados</strong> do sistema.<br/>
+                  Digite a senha de administrador para continuar.
+                </div>
+                <input
+                  type="password"
+                  value={pwd}
+                  onChange={e => { setPwd(e.target.value); setError(''); }}
+                  onKeyDown={handleKeyPress}
+                  placeholder="Senha de administrador"
+                  autoFocus
+                  style={{
+                    width:'100%', padding:'0.6rem 0.75rem',
+                    fontFamily:'Rajdhani', fontSize:'1rem',
+                    background:'var(--bg-elevated)', border:`1px solid ${error ? 'var(--danger)' : 'var(--border)'}`,
+                    borderRadius:'var(--radius)', color:'var(--text-primary)',
+                    marginBottom: error ? '0.4rem' : '1rem', outline:'none'
+                  }}
+                />
+                {error && (
+                  <div style={{
+                    fontFamily:'Rajdhani', fontSize:'0.9rem',
+                    color:'var(--danger)', marginBottom:'1rem', fontWeight:600
+                  }}>
+                    ⚠️ {error}
+                  </div>
+                )}
+                <div style={{display:'flex', gap:'0.75rem'}}>
+                  <button
+                    className="btn btn-danger"
+                    style={{flex:1}}
+                    onClick={handleConfirm}
+                  >
+                    ✓ Confirmar Reset
+                  </button>
+                  <button
+                    className="btn btn-secondary"
+                    style={{flex:1}}
+                    onClick={() => setShowModal(false)}
+                  >
+                    ✕ Cancelar
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+        </>
+      );
+    }
+
+    // --- Printer Section (dentro de Settings) ---
+    function PrinterSection() {
+      const s = window.APP_STATE;
+      const [port, setPort] = React.useState(s.config.printerPort || '');
+      const [ports, setPorts] = React.useState([]);
+      const [status, setStatus] = React.useState('');
+      const [testMsg, setTestMsg] = React.useState('');
+
+      React.useEffect(() => {
+        // Carrega portas disponíveis
+        if (window.electronAPI?.listPrinterPorts) {
+          window.electronAPI.listPrinterPorts().then(p => setPorts(p || []));
+        }
+        // Carrega porta salva
+        if (window.electronAPI?.getPrinterPort) {
+          window.electronAPI.getPrinterPort().then(p => { if (p) setPort(p); });
+        }
+      }, []);
+
+      const savePort = () => {
+        s.config.printerPort = port;
+        window.dispatchUpdate();
+        if (window.electronAPI?.setPrinterPort) window.electronAPI.setPrinterPort(port);
+        setTestMsg('✅ Porta salva!');
+        setTimeout(() => setTestMsg(''), 2000);
+      };
+
+      const checkStatus = async () => {
+        setStatus('verificando...');
+        const r = await window.electronAPI.checkPrinterWMI();
+        const labels = { ok: '✅ Pronta', 'out-of-paper': '🔴 Sem papel', offline: '🟡 Offline', error: '🔴 Erro' };
+        setStatus(labels[r] || r);
+      };
+
+      const testPrint = async () => {
+        setTestMsg('Enviando...');
+        const r = await window.electronAPI.printTicket({
+          ticket: { ticket: 'TESTE', serviceId: 'general' },
+          state: s
+        });
+        setTestMsg(r.success ? '✅ Enviado! Verifique a impressora.' : '❌ Falha ao enviar.');
+        setTimeout(() => setTestMsg(''), 4000);
+      };
+
+      return (
+        <div className="admin-section">
+          <div className="admin-section-title">🖨️ Impressora</div>
+          <div className="settings-form">
+            <div className="settings-field">
+              <label className="settings-label">Porta da Impressora</label>
+              <div style={{display:'flex',gap:'0.5rem',alignItems:'center',flexWrap:'wrap'}}>
+                <input
+                  className="settings-input"
+                  style={{flex:1,minWidth:180}}
+                  value={port}
+                  placeholder="Ex: TMUSB001, USB001, COM3 (vazio = automático)"
+                  onChange={e => setPort(e.target.value)}
+                />
+                {ports.length > 0 && (
+                  <select
+                    style={{background:'var(--bg-elevated)',border:'1px solid var(--border)',borderRadius:'var(--radius)',padding:'0.4rem 0.5rem',fontFamily:'Rajdhani',color:'var(--text-primary)',cursor:'pointer'}}
+                    value=""
+                    onChange={e => { if (e.target.value) setPort(e.target.value); }}
+                  >
+                    <option value="">Selecionar impressora...</option>
+                    {ports.map(p => (
+                      <option key={p.port} value={p.port}>
+                        {p.isDefault ? '★ ' : ''}{p.name} ({p.port})
+                      </option>
+                    ))}
+                  </select>
+                )}
+              </div>
+              <span style={{fontFamily:'Rajdhani',fontSize:'0.85rem',color:'var(--text-muted)',marginTop:'0.3rem'}}>
+                Deixe vazio para usar a impressora padrão do Windows automaticamente.
+              </span>
+            </div>
+            <div style={{display:'flex',gap:'0.75rem',flexWrap:'wrap',alignItems:'center'}}>
+              <button className="btn btn-primary" onClick={savePort}>💾 Salvar Porta</button>
+              <button className="btn btn-secondary" onClick={checkStatus}>🔍 Verificar Status</button>
+              <button className="btn btn-info" onClick={testPrint}>🖨️ Imprimir Teste</button>
+              {status && <span style={{fontFamily:'Rajdhani',fontSize:'1rem'}}>{status}</span>}
+              {testMsg && <span style={{fontFamily:'Rajdhani',fontSize:'1rem'}}>{testMsg}</span>}
+            </div>
+          </div>
+        </div>
+      );
+    }
+
     // --- Settings Tab ---
     function AdminSettings() {
       const s = window.APP_STATE;
-      const [form, setForm] = React.useState({ ...s.config, workingHoursStart: s.config.workingHours.start, workingHoursEnd: s.config.workingHours.end });
+      const [form, setForm] = React.useState({ 
+        ...s.config, 
+        workingHoursStart: s.config.workingHours.start, 
+        workingHoursEnd: s.config.workingHours.end,
+        overlayDuration: s.config.overlayDuration || 5,
+        enableCallSound: s.config.enableCallSound !== undefined ? s.config.enableCallSound : true,
+        callSoundMode: s.config.callSoundMode || 'both',
+        soundVolume: s.config.soundVolume || 0.8,
+        companySlogan: s.config.companySlogan || '',
+        logoUrl: s.config.logoUrl || '',
+        staffUnlockCode: s.config.staffUnlockCode || '1234',
+        enableDigitalTicket: s.config.enableDigitalTicket || false,
+        serverIp: window.SERVER_IP || 'localhost',
+      });
 
       const save = () => {
         s.config.unitName = form.unitName;
         s.config.sectorName = form.sectorName;
         s.config.welcomeMessage = form.welcomeMessage;
         s.config.footerMessage = form.footerMessage;
+        s.config.companySlogan = form.companySlogan;
+        s.config.logoUrl = form.logoUrl;
+        s.config.staffUnlockCode = form.staffUnlockCode;
         s.config.workingHours = { start: form.workingHoursStart, end: form.workingHoursEnd };
+        s.config.overlayDuration = form.overlayDuration;
+        s.config.enableCallSound = form.enableCallSound;
+        s.config.callSoundMode   = form.callSoundMode;
+        s.config.soundVolume = form.soundVolume;
         window.dispatchUpdate();
         alert('Configurações salvas!');
       };
@@ -1910,12 +3247,43 @@
           <div className="admin-section">
             <div className="admin-section-title">Configurações Gerais</div>
             <div className="settings-form">
-              {[['unitName','Nome da Unidade'],['sectorName','Nome do Setor'],['welcomeMessage','Mensagem de Boas-vindas (Totem)'],['footerMessage','Mensagem de Rodapé (Painel)']].map(([k,l]) => (
+              {[['unitName','Nome da Unidade'],['sectorName','Nome do Setor'],['companySlogan','Slogan da Empresa'],['logoUrl','URL do Logo (ex: media/logo.png)'],['welcomeMessage','Mensagem de Boas-vindas (Totem)'],['footerMessage','Mensagem de Rodapé (Painel)']].map(([k,l]) => (
                 <div key={k} className="settings-field">
                   <label className="settings-label">{l}</label>
                   <input className="settings-input" value={form[k]} onChange={e => setForm(f => ({...f, [k]: e.target.value}))} />
                 </div>
               ))}
+              <div className="settings-field">
+                <label style={{display:'flex',alignItems:'center',gap:'0.75rem',fontFamily:'Rajdhani',fontSize:'1rem'}}>
+                  <label className="toggle">
+                    <input type="checkbox" checked={form.enableDigitalTicket} onChange={e => setForm(f => ({...f, enableDigitalTicket: e.target.checked}))} />
+                    <span className="toggle-slider" />
+                  </label>
+                  Habilitar Senha Digital (Exibir link no Totem e Ticket)
+                </label>
+              </div>
+              <div className="settings-field">
+                <label className="settings-label">IP do Servidor</label>
+                <div style={{display:'flex',gap:'0.5rem',alignItems:'center'}}>
+                  <input className="settings-input" style={{flex:1}} value={form.serverIp} onChange={e => setForm(f => ({...f, serverIp: e.target.value}))} placeholder="Ex: 192.168.1.100 ou localhost" />
+                  <button className="btn btn-secondary" style={{fontSize:'0.85rem',padding:'0.4rem 0.75rem',whiteSpace:'nowrap'}} onClick={async () => {
+                    if (window.electronAPI?.saveStationConfig) {
+                      await window.electronAPI.saveStationConfig({ serverIp: form.serverIp });
+                      alert(`IP "${form.serverIp}" salvo!\n\nFeche e reabra o app para conectar ao novo servidor.`);
+                    }
+                  }}>💾 Salvar IP</button>
+                </div>
+                <span style={{fontFamily:'Rajdhani',fontSize:'0.85rem',color:'var(--text-muted)',marginTop:'0.25rem'}}>
+                  IP do computador onde o servidor está rodando. Usado pelo Telão e outros clientes para sincronizar.
+                </span>
+              </div>
+              <div className="settings-field">
+                <label className="settings-label">Código de Desbloqueio do Funcionário (para trocar papel)</label>
+                <input type="text" className="settings-input" value={form.staffUnlockCode} onChange={e => setForm(f => ({...f, staffUnlockCode: e.target.value}))} placeholder="Ex: 1234" />
+                <span style={{fontFamily:'Rajdhani',fontSize:'0.85rem',color:'var(--text-muted)',marginTop:'0.25rem'}}>
+                  Este código será solicitado quando o papel da impressora acabar
+                </span>
+              </div>
               <div style={{display:'flex',gap:'1rem'}}>
                 <div className="settings-field" style={{flex:1}}>
                   <label className="settings-label">Horário de Abertura</label>
@@ -1926,16 +3294,92 @@
                   <input type="time" className="settings-input" value={form.workingHoursEnd} onChange={e => setForm(f => ({...f, workingHoursEnd: e.target.value}))} />
                 </div>
               </div>
+              <div className="settings-field">
+                <label className="settings-label">Duração do Overlay de Chamada (segundos)</label>
+                <input type="number" min="1" max="30" className="settings-input" value={form.overlayDuration} onChange={e => setForm(f => ({...f, overlayDuration: Number(e.target.value)}))} />
+              </div>
+              <div className="settings-field">
+                <label className="settings-label">Som ao Chamar Senha</label>
+                <select className="settings-input" value={form.callSoundMode} onChange={e => setForm(f => ({...f, callSoundMode: e.target.value}))}>
+                  <option value="none">Nenhum</option>
+                  <option value="bell">Campainha</option>
+                  <option value="voice">Voz sintética</option>
+                  <option value="both">Campainha + Voz</option>
+                </select>
+              </div>
+              {form.callSoundMode !== 'none' && (
+                <div className="settings-field">
+                  <label className="settings-label">Volume do Som (0.0 a 1.0)</label>
+                  <input type="number" min="0" max="1" step="0.1" className="settings-input" value={form.soundVolume} onChange={e => setForm(f => ({...f, soundVolume: Number(e.target.value)}))} />
+                </div>
+              )}
               <button className="btn btn-primary" style={{alignSelf:'flex-start'}} onClick={save}>Salvar Configurações</button>
             </div>
           </div>
+          {window.electronAPI && window.electronAPI.isElectron && (
+            <PrinterSection />
+          )}
           <div className="admin-section">
-            <div className="admin-section-title">Operações de Reset e Exportação</div>
             <div className="reset-buttons">
               <button className="btn btn-warning" style={{background:'var(--warning)',color:'#fff'}} onClick={() => { if(window.confirm('Confirma reset diário? Filas e contadores serão zerados.')) dailyReset(); }}>🔄 Reset Diário</button>
-              <button className="btn btn-danger" onClick={() => { if(window.confirm('ATENÇÃO: Reset completo irá apagar TUDO. Confirma?') && window.confirm('Tem certeza? Esta ação é irreversível.')) fullReset(); }}>⚠️ Reset Completo</button>
+              <FullResetButton />
               <button className="btn btn-secondary" onClick={exportHistory}>📥 Exportar Histórico JSON</button>
+              {window.electronAPI && window.electronAPI.isElectron && (
+                <button 
+                  className="btn btn-info" 
+                  onClick={async () => {
+                    try {
+                      const status = await window.electronAPI.checkPrinterWMI();
+                      alert(`Status da Impressora (WMI):\n\n${status}\n\nVerifique o console (F12) para mais detalhes.`);
+                      console.log('[Diagnóstico] Status WMI:', status);
+                    } catch (error) {
+                      alert(`Erro ao verificar impressora:\n\n${error.message}`);
+                      console.error('[Diagnóstico] Erro WMI:', error);
+                    }
+                  }}
+                >
+                  🖨️ Testar Status Impressora (WMI)
+                </button>
+              )}
+              {window.electronAPI && window.electronAPI.isElectron && window.electronAPI.diagnosePrinter && (
+                <button 
+                  className="btn btn-secondary" 
+                  onClick={async () => {
+                    try {
+                      const result = await window.electronAPI.diagnosePrinter();
+                      const msg = [
+                        `=== paperStatus global: ${result.paperStatusGlobal} ===`,
+                        '',
+                        '--- Win32_Printer ---',
+                        result.win32Printers,
+                        result.win32PrintersStderr ? `STDERR: ${result.win32PrintersStderr}` : '',
+                        '',
+                        '--- Fila de Jobs (Get-PrintJob) ---',
+                        result.printJobs,
+                        result.printJobsStderr ? `STDERR: ${result.printJobsStderr}` : '',
+                      ].filter(l => l !== undefined).join('\n');
+                      alert(msg);
+                      console.log('[Diagnóstico Fila]', result);
+                    } catch (error) {
+                      alert(`Erro no diagnóstico:\n\n${error.message}`);
+                      console.error('[Diagnóstico Fila] Erro:', error);
+                    }
+                  }}
+                >
+                  🔍 Diagnóstico Completo (Fila + WMI)
+                </button>
+              )}
             </div>
+          </div>
+          <div className="admin-section">
+            <div className="admin-section-title">Backup e Restauração</div>
+            <div className="reset-buttons">
+              <button className="btn btn-success" onClick={exportBackup}>💾 Fazer Backup Completo</button>
+              <button className="btn btn-info" onClick={importBackup}>📂 Restaurar Backup</button>
+            </div>
+            <p style={{fontFamily:'Rajdhani',fontSize:'0.9rem',color:'var(--text-muted)',marginTop:'0.75rem'}}>
+              O backup inclui: configurações, serviços, guichês, mídia indoor e histórico de chamadas.
+            </p>
           </div>
         </div>
       );
@@ -1954,7 +3398,7 @@
     function NavBar({ activeModule, setActiveModule }) {
       return (
         <nav className="navbar">
-          <span className="navbar-logo">BALCÃO</span>
+          <span className="navbar-logo">Painel do Ni</span>
           <div className="navbar-nav">
             {NAV_ITEMS.map(item => (
               <button
@@ -1982,6 +3426,85 @@
       admin:    'admin',
     };
 
+    // =========================================================
+    // ErrorBoundary — Captura erros do React
+    // =========================================================
+    class ErrorBoundary extends React.Component {
+      constructor(props) {
+        super(props);
+        this.state = { hasError: false, error: null, errorInfo: null };
+      }
+
+      static getDerivedStateFromError(error) {
+        return { hasError: true };
+      }
+
+      componentDidCatch(error, errorInfo) {
+        console.error('ErrorBoundary capturou erro:', error, errorInfo);
+        this.setState({ error, errorInfo });
+      }
+
+      render() {
+        if (this.state.hasError) {
+          return (
+            <div style={{
+              padding: '40px',
+              textAlign: 'center',
+              fontFamily: 'Arial, sans-serif',
+              backgroundColor: '#fff3cd',
+              border: '2px solid #ffc107',
+              borderRadius: '8px',
+              margin: '20px'
+            }}>
+              <h1 style={{ color: '#856404' }}>⚠️ Erro na Aplicação</h1>
+              <p style={{ color: '#856404', marginBottom: '20px' }}>
+                Ocorreu um erro inesperado. Por favor, recarregue a página.
+              </p>
+              <details style={{ 
+                textAlign: 'left', 
+                backgroundColor: '#fff', 
+                padding: '15px', 
+                borderRadius: '4px',
+                maxWidth: '800px',
+                margin: '0 auto'
+              }}>
+                <summary style={{ cursor: 'pointer', fontWeight: 'bold', marginBottom: '10px' }}>
+                  Detalhes do erro (clique para expandir)
+                </summary>
+                <pre style={{ 
+                  fontSize: '12px', 
+                  overflow: 'auto',
+                  backgroundColor: '#f8f9fa',
+                  padding: '10px',
+                  borderRadius: '4px'
+                }}>
+                  {this.state.error && this.state.error.toString()}
+                  {this.state.errorInfo && this.state.errorInfo.componentStack}
+                </pre>
+              </details>
+              <button 
+                onClick={() => window.location.reload()}
+                style={{
+                  marginTop: '20px',
+                  padding: '10px 20px',
+                  fontSize: '16px',
+                  backgroundColor: '#007bff',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '4px',
+                  cursor: 'pointer'
+                }}
+              >
+                Recarregar Página
+              </button>
+            </div>
+          );
+        }
+
+        return this.props.children;
+      }
+    }
+
     function App() {
       const [, setState] = React.useState(0);
       const stationMode   = window.STATION_MODE;
@@ -2003,9 +3526,21 @@
       React.useEffect(() => {
         const labels = { totem: 'Totem', painel: 'Painel', operador: 'Operador', admin: 'Administrador' };
         document.title = stationMode
-          ? `BALCÃO — ${labels[stationMode] || stationMode}`
-          : 'BALCÃO — Sistema de Senhas';
+          ? `Painel de senha do Ni — ${labels[stationMode] || stationMode}`
+          : 'Painel de senha do Ni';
       }, []);
+
+      // Fullscreen automático no módulo Painel (apenas no Electron)
+      React.useEffect(() => {
+        if (!window.electronAPI) return;
+        
+        const currentModule = fixedModule || activeModule;
+        if (currentModule === 'painel') {
+          window.electronAPI.setFullscreen(true);
+        } else {
+          window.electronAPI.setFullscreen(false);
+        }
+      }, [activeModule, fixedModule]);
 
       const renderModule = () => {
         const mod = fixedModule || activeModule;
@@ -2042,7 +3577,11 @@
     // Ponto de entrada — monta a aplicação
     // =========================================================
     const root = ReactDOM.createRoot(document.getElementById('root'));
-    root.render(<App />);
+    root.render(
+      <ErrorBoundary>
+        <App />
+      </ErrorBoundary>
+    );
   </script>
 </body>
 </html>

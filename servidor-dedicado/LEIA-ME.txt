@@ -1,0 +1,38 @@
+====================================================
+  PAINEL DE SENHA DO NI — SERVIDOR DEDICADO
+====================================================
+
+REQUISITOS:
+  - Windows 10/11
+  - Node.js 18+ (https://nodejs.org)
+
+INSTALACAO:
+  1. Instale o Node.js se ainda nao tiver
+  2. Clique com botao direito em INSTALAR-SERVIDOR.bat
+  3. Selecione "Executar como administrador"
+  4. Aguarde a instalacao concluir
+
+APOS INSTALAR:
+  O servidor inicia automaticamente com o Windows.
+  Porta: 3080
+
+  Acesse pelo navegador:
+    http://localhost:3080         (neste PC)
+    http://SEU_IP:3080            (outros dispositivos)
+
+ESTRUTURA:
+  server.js          - Servidor HTTP principal
+  mobile.html        - Interface do operador mobile
+  index.html         - Interface principal (totem/painel/admin)
+  media/             - Pasta para imagens e videos do carrossel
+  db.json            - Banco de dados (criado automaticamente)
+
+GERENCIAR SERVICO:
+  Iniciar:  sc start "Painel de senha do Ni - Servidor"
+  Parar:    sc stop  "Painel de senha do Ni - Servidor"
+  Remover:  REMOVER-SERVIDOR.bat (como Administrador)
+
+SUPORTE:
+  Em caso de problemas, verifique o log em:
+  C:\ProgramData\painel-senha-ni-servidor\
+====================================================

@@ -1,0 +1,19 @@
+{
+  "name": "painel-senha-ni-operador",
+  "version": "1.0.0",
+  "description": "Painel de senha do Ni - Operador (Android)",
+  "main": "index.js",
+  "scripts": {
+    "build": "node scripts/build.js",
+    "cap:add": "npx cap add android",
+    "cap:sync": "npx cap sync android",
+    "cap:open": "npx cap open android"
+  },
+  "dependencies": {
+    "@capacitor/android": "^6.2.1",
+    "@capacitor/core": "^6.2.1"
+  },
+  "devDependencies": {
+    "@capacitor/cli": "^6.2.1"
+  }
+}
