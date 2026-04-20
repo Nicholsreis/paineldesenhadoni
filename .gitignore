@@ -16,6 +16,8 @@ build/preview_*.png
 build/icon_256.png
 servidor-dedicado/node_modules/
 operador-app/node_modules/
+operador-app/android/
+operador-app/.idea/
 operador-app/www/media/
 TMUSB001
 WSD-*
