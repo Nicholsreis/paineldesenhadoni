@@ -48,6 +48,11 @@ contextBridge.exposeInMainWorld('electronAPI', {
   getBellUrl:       ()         => ipcRenderer.invoke('get-bell-url'),
   getBellBase64:    ()         => ipcRenderer.invoke('get-bell-base64'),
 
+  // Sistema de Licença
+  licenseValidate:  (code) => ipcRenderer.invoke('license-validate', code),
+  licenseGetSaved:  ()     => ipcRenderer.invoke('license-get-saved'),
+  licenseClear:     ()     => ipcRenderer.invoke('license-clear'),
+
   // IP local para QR Code do operador mobile
   getLocalIp:        () =>         ipcRenderer.invoke('get-local-ip'),
   generateQrCode:    (text) =>     ipcRenderer.invoke('generate-qrcode', text),

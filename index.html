@@ -3207,6 +3207,50 @@
       );
     }
 
+    // --- License Section (dentro de Settings) ---
+    function LicenseSection() {
+      const [saved, setSaved] = React.useState(null);
+      const [msg, setMsg] = React.useState('');
+
+      React.useEffect(() => {
+        if (window.electronAPI?.licenseGetSaved) {
+          window.electronAPI.licenseGetSaved().then(s => setSaved(s));
+        }
+      }, []);
+
+      const handleDeactivate = async () => {
+        if (!window.confirm('Desativar a licença? O app será bloqueado até uma nova ativação.')) return;
+        await window.electronAPI.licenseClear();
+        setMsg('Licença removida. Reinicie o app para reativar.');
+        setSaved(null);
+      };
+
+      if (!saved?.license) return null;
+      const lic = saved.license;
+      const expFormatted = lic.expiration_date
+        ? new Date(lic.expiration_date).toLocaleDateString('pt-BR', { day:'2-digit', month:'2-digit', year:'numeric' })
+        : 'Sem data';
+      const days = lic.expiration_date
+        ? Math.ceil((new Date(lic.expiration_date) - new Date()) / 86400000)
+        : null;
+
+      return (
+        <div className="admin-section">
+          <div className="admin-section-title">🔑 Licença</div>
+          <div style={{fontFamily:'Rajdhani',fontSize:'1rem',display:'flex',flexDirection:'column',gap:'0.4rem'}}>
+            <div><strong>Tipo:</strong> {lic.license_type || 'Padrão'}</div>
+            <div><strong>Status:</strong> <span style={{color:'var(--success)'}}>{lic.status}</span></div>
+            <div><strong>Válida até:</strong> {expFormatted} {days !== null ? `(${days} dias restantes)` : ''}</div>
+            <div><strong>Código:</strong> <code style={{fontSize:'0.85rem',background:'var(--bg-elevated)',padding:'2px 6px',borderRadius:4}}>{saved.code}</code></div>
+            {msg && <div style={{color:'var(--warning)',marginTop:'0.5rem'}}>{msg}</div>}
+            <button className="btn btn-danger" style={{marginTop:'0.5rem',alignSelf:'flex-start',fontSize:'0.85rem'}} onClick={handleDeactivate}>
+              🔓 Desativar Licença
+            </button>
+          </div>
+        </div>
+      );
+    }
+
     // --- Settings Tab ---
     function AdminSettings() {
       const s = window.APP_STATE;
@@ -3318,6 +3362,9 @@
           </div>
           {window.electronAPI && window.electronAPI.isElectron && (
             <PrinterSection />
+          )}
+          {window.electronAPI && window.electronAPI.isElectron && (
+            <LicenseSection />
           )}
           <div className="admin-section">
             <div className="reset-buttons">
@@ -3574,12 +3621,224 @@
     }
 
     // =========================================================
+    // Sistema de Licença — Gatekeeper + Tela de Ativação
+    // =========================================================
+
+    // Formata data para exibição
+    function fmtDate(iso) {
+      if (!iso) return '';
+      return new Date(iso).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric' });
+    }
+
+    // Badge de licença exibido no Admin
+    function LicenseBadge({ license }) {
+      if (!license) return null;
+      const days = license.expiration_date
+        ? Math.ceil((new Date(license.expiration_date) - new Date()) / 86400000)
+        : null;
+      const isDemo = license.license_type === 'Demonstrativa';
+      const isWarning = days !== null && days <= 7;
+      const color = isDemo ? '#f59e0b' : isWarning ? '#ef4444' : '#22c55e';
+      const label = isDemo
+        ? `🔑 Demo — válida até ${fmtDate(license.expiration_date)}`
+        : isWarning
+          ? `⚠️ Licença vence em ${days} dia${days !== 1 ? 's' : ''}`
+          : `✓ Licença ${license.license_type || 'Ativa'} — válida até ${fmtDate(license.expiration_date)}`;
+      return (
+        <div style={{
+          position: 'fixed', bottom: 8, right: 12, zIndex: 9000,
+          background: `${color}22`, border: `1px solid ${color}`,
+          borderRadius: 6, padding: '3px 10px',
+          fontFamily: 'Rajdhani, sans-serif', fontSize: '0.78rem',
+          fontWeight: 600, color, pointerEvents: 'none',
+        }}>
+          {label}
+        </div>
+      );
+    }
+
+    // Tela de Ativação
+    function ActivationScreen({ onActivated }) {
+      const [code, setCode] = React.useState('');
+      const [loading, setLoading] = React.useState(false);
+      const [error, setError] = React.useState('');
+      const [checking, setChecking] = React.useState(true);
+
+      // Verifica serial salvo ao montar
+      React.useEffect(() => {
+        async function checkSaved() {
+          if (!window.electronAPI?.licenseGetSaved) { setChecking(false); return; }
+          const saved = await window.electronAPI.licenseGetSaved();
+          if (saved?.code) {
+            const result = await window.electronAPI.licenseValidate(saved.code);
+            if (result.isValid) { onActivated(result.license); return; }
+            setError(result.error || 'Licença inválida. Por favor, reative.');
+          }
+          setChecking(false);
+        }
+        checkSaved();
+      }, []);
+
+      const handleActivate = async () => {
+        if (!code.trim()) { setError('Por favor, insira o código de licença.'); return; }
+        setLoading(true); setError('');
+        try {
+          const result = await window.electronAPI.licenseValidate(code.trim().toUpperCase());
+          if (result.isValid) {
+            onActivated(result.license);
+          } else {
+            setError(result.error || 'Licença inválida.');
+          }
+        } catch (e) {
+          setError('Erro ao verificar licença. Verifique sua conexão.');
+        }
+        setLoading(false);
+      };
+
+      // Input — 6 caracteres alfanuméricos, sem formatação automática
+      const handleInput = (e) => {
+        const v = e.target.value.replace(/[^A-Za-z0-9]/g, '').toUpperCase();
+        setCode(v.substring(0, 6));
+      };
+
+      if (checking) {
+        return (
+          <div style={{ position:'fixed', inset:0, background:'#0f172a', display:'flex', alignItems:'center', justifyContent:'center', zIndex:99999 }}>
+            <div style={{ color:'#94a3b8', fontFamily:'Rajdhani, sans-serif', fontSize:'1.2rem' }}>Verificando licença...</div>
+          </div>
+        );
+      }
+
+      return (
+        <div style={{
+          position:'fixed', inset:0, background:'linear-gradient(135deg, #0f172a 0%, #1e293b 100%)',
+          display:'flex', alignItems:'center', justifyContent:'center', zIndex:99999,
+          fontFamily:'Rajdhani, sans-serif',
+        }}>
+          <div style={{
+            background:'rgba(255,255,255,0.05)', border:'1px solid rgba(255,255,255,0.1)',
+            borderRadius:16, padding:'2.5rem 2rem', width:'100%', maxWidth:420,
+            boxShadow:'0 25px 60px rgba(0,0,0,0.5)', textAlign:'center',
+          }}>
+            {/* Ícone */}
+            <div style={{ fontSize:'3.5rem', marginBottom:'0.75rem' }}>🔐</div>
+
+            {/* Título */}
+            <div style={{ fontFamily:'Oswald, sans-serif', fontSize:'1.8rem', fontWeight:700, color:'#f8fafc', letterSpacing:'0.05em', marginBottom:'0.4rem' }}>
+              Painel de senha do Ni
+            </div>
+            <div style={{ color:'#94a3b8', fontSize:'1rem', marginBottom:'2rem', lineHeight:1.5 }}>
+              Insira seu código de licença para ativar o software.
+            </div>
+
+            {/* Input */}
+            <input
+              type="text"
+              value={code}
+              onChange={handleInput}
+              onKeyDown={e => e.key === 'Enter' && handleActivate()}
+              placeholder="Ex: JXPWP1"
+              maxLength={6}
+              style={{
+                width:'100%', padding:'0.85rem 1rem', marginBottom:'0.75rem',
+                background:'rgba(255,255,255,0.08)', border:`1px solid ${error ? '#ef4444' : 'rgba(255,255,255,0.15)'}`,
+                borderRadius:10, color:'#f8fafc', fontFamily:'Courier New, monospace',
+                fontSize:'1.2rem', textAlign:'center', letterSpacing:'0.15em', outline:'none',
+              }}
+              autoFocus
+            />
+
+            {/* Erro */}
+            {error && (
+              <div style={{ color:'#fca5a5', fontSize:'0.9rem', marginBottom:'0.75rem', background:'rgba(239,68,68,0.1)', borderRadius:8, padding:'0.5rem 0.75rem' }}>
+                ⚠️ {error}
+              </div>
+            )}
+
+            {/* Botão */}
+            <button
+              onClick={handleActivate}
+              disabled={loading || !code.trim()}
+              style={{
+                width:'100%', padding:'0.9rem', borderRadius:10, border:'none',
+                background: loading || !code.trim() ? '#334155' : 'linear-gradient(135deg, #2563eb, #1d4ed8)',
+                color:'#fff', fontFamily:'Rajdhani, sans-serif', fontSize:'1.1rem',
+                fontWeight:700, cursor: loading || !code.trim() ? 'not-allowed' : 'pointer',
+                letterSpacing:'0.05em', transition:'all 0.2s',
+              }}
+            >
+              {loading ? '⏳ Verificando...' : '🔑 Ativar Licença'}
+            </button>
+
+            {/* Suporte */}
+            <div style={{ marginTop:'1.5rem', color:'#64748b', fontSize:'0.85rem', lineHeight:1.6 }}>
+              Não tem uma licença?{' '}
+              <span
+                style={{ color:'#3b82f6', cursor:'pointer', textDecoration:'underline' }}
+                onClick={() => { if (window.electronAPI) window.electronAPI.setFullscreen && window.electronAPI.setFullscreen(false); }}
+              >
+                Solicitar licença Demo
+              </span>
+              <br/>
+              Suporte: contato@paineldesenhadoni.com.br
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    // Gatekeeper — envolve o App e bloqueia se não houver licença válida
+    function LicenseGate({ children }) {
+      const [licenseState, setLicenseState] = React.useState('checking'); // 'checking' | 'valid' | 'invalid'
+      const [license, setLicense] = React.useState(null);
+
+      const handleActivated = (lic) => {
+        setLicense(lic);
+        setLicenseState('valid');
+      };
+
+      // Revalidação periódica a cada 1h
+      React.useEffect(() => {
+        if (licenseState !== 'valid' || !license) return;
+        const interval = setInterval(async () => {
+          if (!window.electronAPI?.licenseGetSaved) return;
+          const saved = await window.electronAPI.licenseGetSaved();
+          if (!saved?.code) { setLicenseState('invalid'); return; }
+          const result = await window.electronAPI.licenseValidate(saved.code);
+          if (!result.isValid) setLicenseState('invalid');
+        }, 60 * 60 * 1000); // 1 hora
+        return () => clearInterval(interval);
+      }, [licenseState, license]);
+
+      if (licenseState === 'checking' || licenseState === 'invalid') {
+        return <ActivationScreen onActivated={handleActivated} />;
+      }
+
+      return (
+        <>
+          {children}
+          <LicenseBadge license={license} />
+        </>
+      );
+    }
+
+    // =========================================================
     // Ponto de entrada — monta a aplicação
     // =========================================================
     const root = ReactDOM.createRoot(document.getElementById('root'));
+
+    // Se não está no Electron, pula o gatekeeper (modo web/browser)
+    const isElectronEnv = !!(window.electronAPI && window.electronAPI.isElectron);
+
     root.render(
       <ErrorBoundary>
-        <App />
+        {isElectronEnv ? (
+          <LicenseGate>
+            <App />
+          </LicenseGate>
+        ) : (
+          <App />
+        )}
       </ErrorBoundary>
     );
   </script>

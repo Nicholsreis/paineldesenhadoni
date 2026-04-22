@@ -762,6 +762,65 @@ ipcMain.handle('generate-qrcode', async (_event, text) => {
   }
 });
 
+// =========================================================
+// Sistema de Licença — validação via Supabase (inline)
+// =========================================================
+const SUPABASE_URL  = 'https://npfqnsgjicmxwmurwosu.supabase.co';
+const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5wZnFuc2dqaWNteHdtdXJ3b3N1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY3ODQyNDQsImV4cCI6MjA5MjM2MDI0NH0.wLIFMxZkE9rjGQjZF7eFi0dyDioOGQfg1jfhRy32O90';
+
+async function validateSerial(code) {
+  if (!code || !code.trim()) return { isValid: false, license: null, error: 'Por favor, insira um código de licença.' };
+  const cleanCode = code.trim().toUpperCase();
+  try {
+    const { net } = require('electron');
+    const url = `${SUPABASE_URL}/rest/v1/serials?code=eq.${encodeURIComponent(cleanCode)}&select=*&limit=1`;
+    const response = await fetch(url, {
+      headers: { 'apikey': SUPABASE_ANON, 'Authorization': `Bearer ${SUPABASE_ANON}`, 'Content-Type': 'application/json' },
+    });
+    if (!response.ok) throw new Error(`HTTP ${response.status}`);
+    const data = await response.json();
+    if (!data || data.length === 0) return { isValid: false, license: null, error: 'Código de licença inválido ou não encontrado.' };
+    const serial = data[0];
+    if (serial.status === 'Revoked') return { isValid: false, license: serial, error: 'Esta licença foi revogada. Entre em contato com o suporte.' };
+    if (serial.status === 'Pending') return { isValid: false, license: serial, error: 'Esta licença ainda não foi ativada.' };
+    if (serial.status !== 'Active') return { isValid: false, license: serial, error: `Status inválido: ${serial.status}.` };
+    if (serial.expiration_date) {
+      const expDate = new Date(serial.expiration_date);
+      if (expDate <= new Date()) {
+        const fmt = expDate.toLocaleDateString('pt-BR', { day:'2-digit', month:'2-digit', year:'numeric', hour:'2-digit', minute:'2-digit' });
+        return { isValid: false, license: serial, error: `Sua licença (${serial.license_type || 'Padrão'}) expirou em ${fmt}.` };
+      }
+    }
+    return { isValid: true, license: serial, error: null };
+  } catch (err) {
+    console.error('[License] Erro:', err.message);
+    return { isValid: false, license: null, error: 'Não foi possível verificar a licença. Verifique sua conexão.' };
+  }
+}
+
+function getLicenseFile() {
+  if (app.isPackaged) return path.join(path.dirname(app.getPath('exe')), 'license.json');
+  return path.join(__dirname, 'license.json');
+}
+function readSavedLicense() {
+  try { const f = getLicenseFile(); if (fs.existsSync(f)) return JSON.parse(fs.readFileSync(f, 'utf8')); } catch (e) {}
+  return null;
+}
+function saveLicense(data) {
+  try { fs.writeFileSync(getLicenseFile(), JSON.stringify(data, null, 2), 'utf8'); } catch (e) { console.error('[License] Erro ao salvar:', e.message); }
+}
+function clearLicense() {
+  try { const f = getLicenseFile(); if (fs.existsSync(f)) fs.unlinkSync(f); } catch (e) {}
+}
+
+ipcMain.handle('license-validate', async (_event, code) => {
+  const result = await validateSerial(code);
+  if (result.isValid && result.license) saveLicense({ code, license: result.license, validatedAt: new Date().toISOString() });
+  return result;
+});
+ipcMain.handle('license-get-saved', () => readSavedLicense());
+ipcMain.handle('license-clear', () => { clearLicense(); return { success: true }; });
+
 // IPC — salva configuração da estação (IP do servidor, modo)
 ipcMain.handle('save-station-config', (_event, config) => {
   try {
