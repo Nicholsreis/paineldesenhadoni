@@ -1,4 +1,4 @@
-# Painel de senha do Ni
+# ChamaAí
 
 Sistema de gerenciamento de senhas para atendimento presencial em balcões, totens e estabelecimentos comerciais. Desenvolvido com Electron, Node.js e React.
 
